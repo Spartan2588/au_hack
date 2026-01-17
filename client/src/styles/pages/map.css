@@ -54,6 +54,13 @@
   border-top: 1px solid rgba(148, 163, 184, 0.05);
 }
 
+#map-container {
+  width: 100%;
+  height: 600px;
+  min-height: 600px;
+  position: relative;
+}
+
 @media (max-width: 768px) {
   .map-page {
     padding-top: 60px;

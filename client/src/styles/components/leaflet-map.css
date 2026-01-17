@@ -1,0 +1,282 @@
+/* Leaflet Map View Styles */
+/* Minimal required styles for Leaflet integration */
+
+.leaflet-map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.leaflet-map-container {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  background: #0a0a1a;
+  z-index: 1;
+}
+
+/* Ensure Leaflet map is visible */
+.leaflet-map-container .leaflet-container {
+  background: #0a0a1a !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.leaflet-map-container .leaflet-tile-container img {
+  opacity: 1 !important;
+}
+
+/* Loading Overlay */
+.aqi-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 26, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  z-index: 1000;
+  color: #e2e8f0;
+  font-size: 0.95rem;
+  backdrop-filter: blur(4px);
+}
+
+/* Error Overlay */
+.aqi-error-overlay {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  z-index: 1000;
+  font-size: 0.9rem;
+  backdrop-filter: blur(4px);
+}
+
+/* Custom AQI Marker */
+.aqi-marker {
+  background: transparent;
+  border: none;
+}
+
+.aqi-marker-pin {
+  width: 40px;
+  height: 40px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.aqi-marker-value {
+  transform: rotate(45deg);
+  color: white;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.aqi-marker-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  opacity: 0.4;
+  animation: markerPulse 2s infinite;
+}
+
+@keyframes markerPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+
+  50% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* AQI Popup Styling */
+.aqi-popup-container .leaflet-popup-content-wrapper {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.aqi-popup-container .leaflet-popup-content {
+  margin: 0;
+  width: auto !important;
+}
+
+.aqi-popup-container .leaflet-popup-tip {
+  background: linear-gradient(135deg, rgba(30, 30, 60, 0.95) 0%, rgba(15, 15, 35, 0.95) 100%);
+}
+
+.aqi-popup {
+  padding: 1.25rem;
+  min-width: 260px;
+  max-width: 320px;
+  background: linear-gradient(135deg, rgba(30, 30, 60, 0.95) 0%, rgba(15, 15, 35, 0.95) 100%) !important;
+  border: 1px solid rgba(167, 139, 250, 0.2) !important;
+  border-radius: 0.75rem !important;
+  backdrop-filter: blur(10px);
+}
+
+.aqi-popup-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.aqi-value-large {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+}
+
+.aqi-info {
+  flex: 1;
+}
+
+.aqi-category {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.aqi-station {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+/* Clicked Location - prominent display */
+.aqi-clicked-location {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(167, 139, 250, 0.2);
+}
+
+/* Station note - secondary info */
+.aqi-station-note {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.aqi-nearest-note {
+  background: rgba(167, 139, 250, 0.1);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  color: #a78bfa;
+  margin-bottom: 1rem;
+  border-left: 2px solid #a78bfa;
+}
+
+/* Pollutants Grid */
+.aqi-pollutants {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(167, 139, 250, 0.1);
+}
+
+.pollutants-title {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pollutants-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.pollutant-item {
+  background: rgba(167, 139, 250, 0.05);
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  text-align: center;
+}
+
+.pollutant-name {
+  display: block;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.pollutant-value {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.aqi-time {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  text-align: right;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+
+  .leaflet-map-wrapper,
+  .leaflet-map-container {
+    min-height: 400px;
+  }
+
+  .aqi-popup {
+    min-width: 220px;
+    padding: 1rem;
+  }
+
+  .aqi-value-large {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+
+  .pollutants-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

@@ -4,14 +4,31 @@ import gsap from 'gsap';
 export class CityEnvironment {
   constructor(container) {
     this.container = container;
+
+    // Check WebGL support BEFORE trying to create anything
+    if (!this.isWebGLAvailable()) {
+      throw new Error('WebGL not available - hardware acceleration may be disabled');
+    }
+
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(
       75,
-      container.clientWidth / container.clientHeight,
+      container.clientWidth / container.clientHeight || 1,
       0.1,
       2000
     );
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
+    // Create WebGL renderer with error handling
+    try {
+      this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+
+      // Double-check context was created
+      if (!this.renderer.getContext()) {
+        throw new Error('WebGL context creation failed');
+      }
+    } catch (error) {
+      throw new Error('WebGL renderer creation failed: ' + error.message);
+    }
 
     this.setupRenderer();
     this.setupCamera();
@@ -44,6 +61,21 @@ export class CityEnvironment {
     this.generateCity();
     this.setupEventListeners();
     this.animate();
+  }
+
+  /**
+   * Check if WebGL is available in the browser
+   */
+  isWebGLAvailable() {
+    try {
+      const canvas = document.createElement('canvas');
+      return !!(
+        window.WebGLRenderingContext &&
+        (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+      );
+    } catch (e) {
+      return false;
+    }
   }
 
   setupRenderer() {
@@ -111,14 +143,14 @@ export class CityEnvironment {
     canvas.width = 256;
     canvas.height = 256;
     const ctx = canvas.getContext('2d');
-    
+
     // Create gradient: black at bottom (front), darker at top (back)
     const gradient = ctx.createLinearGradient(0, 0, 0, 256);
     gradient.addColorStop(0, '#1a1a2e'); // Darker back
     gradient.addColorStop(1, '#000000'); // Black front
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 256, 256);
-    
+
     const texture = new THREE.CanvasTexture(canvas);
     this.scene.background = texture;
 

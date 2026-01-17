@@ -21,7 +21,7 @@ export class MapView {
     container.innerHTML = `
       <div class="map-view">
         <div class="map-header">
-          <h2>Urban Risk Map</h2>
+          <h2>Mumbai City Map</h2>
           <div class="map-controls">
             <select id="map-layer" class="map-select">
               <option value="environmental">Environmental Risk</option>
