@@ -8,7 +8,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   flex-wrap: wrap;
   gap: 1rem;
 }
@@ -55,11 +55,23 @@
   font-style: italic;
 }
 
+.trend-section {
+  margin-bottom: 2.5rem;
+}
+
+.trend-section h3 {
+  font-size: 1.2rem;
+  color: #e2e8f0;
+  margin: 0 0 1.5rem 0;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(167, 139, 250, 0.1);
+  padding-bottom: 0.75rem;
+}
+
 .trend-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 2rem;
 }
 
 .trend-card {
@@ -78,55 +90,53 @@
   background: linear-gradient(135deg, rgba(167, 139, 250, 0.05) 0%, rgba(30, 30, 60, 0.4) 100%);
 }
 
-.trend-card h3 {
+.trend-card h4 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: #e2e8f0;
   font-weight: 600;
 }
 
-.trend-card.full-width {
-  grid-column: 1 / -1;
-}
-
 .trend-canvas {
   width: 100%;
-  height: 250px;
+  height: 280px;
   display: block;
 }
 
-.trend-legend-inline {
+.trend-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(30, 30, 60, 0.3) 0%, rgba(15, 15, 35, 0.3) 100%);
+  border: 1px solid rgba(167, 139, 250, 0.1);
+  border-radius: 1rem;
+  margin-top: 2rem;
+}
+
+.stat-item {
   display: flex;
-  gap: 1.5rem;
-  justify-content: center;
-  font-size: 0.9rem;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.85rem;
   color: #94a3b8;
-  align-items: center;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.legend-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  margin-right: 0.5rem;
-}
-
-.legend-dot.baseline {
-  background: #a78bfa;
-}
-
-.legend-dot.simulation {
-  background: #06b6d4;
+.stat-value {
+  font-size: 1.3rem;
+  color: #a78bfa;
+  font-weight: 700;
 }
 
 @media (max-width: 1024px) {
   .trend-grid {
     grid-template-columns: 1fr;
-  }
-
-  .trend-card.full-width {
-    grid-column: 1;
   }
 }
 
@@ -140,12 +150,14 @@
     align-items: flex-start;
   }
 
-  .trend-controls {
-    width: 100%;
-    flex-direction: column;
+  .trend-header h2 {
+    font-size: 1.5rem;
   }
 
-  .trend-select,
+  .trend-controls {
+    width: 100%;
+  }
+
   .trend-btn {
     width: 100%;
   }
@@ -155,7 +167,17 @@
     gap: 1rem;
   }
 
-  .trend-legend {
-    gap: 1rem;
+  .trend-canvas {
+    height: 200px;
+  }
+
+  .trend-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .stat-value {
+    font-size: 1rem;
   }
 }

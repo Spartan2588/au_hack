@@ -18,23 +18,32 @@ export class CascadingFailureViz {
         </div>
 
         <div class="cascade-container">
-          <div class="cascade-diagram-section">
-            <div id="cascade-diagram" class="cascade-diagram"></div>
+          <!-- Progression Timeline -->
+          <div class="cascade-progression">
+            <h3>Failure Propagation</h3>
+            <div id="cascade-timeline" class="cascade-timeline"></div>
           </div>
 
-          <div class="cascade-details">
-            <div class="cascade-timeline">
-              <h3>Propagation Timeline</h3>
-              <div id="cascade-stages" class="cascade-stages"></div>
-            </div>
-
-            <div class="cascade-summary">
-              <h3>Impact Summary</h3>
-              <div id="cascade-summary" class="summary-content"></div>
-            </div>
+          <!-- Metrics Impact -->
+          <div class="cascade-metrics">
+            <h3>System Impact</h3>
+            <div id="cascade-metrics" class="metrics-grid"></div>
           </div>
         </div>
 
+        <!-- Detailed Stages -->
+        <div class="cascade-stages-section">
+          <h3>Propagation Stages</h3>
+          <div id="cascade-stages" class="cascade-stages"></div>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="cascade-summary">
+          <h3>Impact Summary</h3>
+          <div id="cascade-summary" class="summary-content"></div>
+        </div>
+
+        <!-- Controls -->
         <div class="cascade-controls">
           <button id="cascade-play" class="cascade-btn primary">▶ Animate Cascade</button>
           <button id="cascade-reset" class="cascade-btn secondary">↻ Reset</button>
@@ -80,7 +89,6 @@ export class CascadingFailureViz {
   updateCascadeFromScenario(scenario) {
     if (!scenario.intervention) return;
 
-    // Find the most significant change
     const baseline = scenario.baseline;
     const intervention = scenario.intervention;
 
@@ -113,138 +121,105 @@ export class CascadingFailureViz {
   renderCascade() {
     if (!this.cascade) return;
 
-    this.renderDiagram();
     this.renderTimeline();
+    this.renderMetricsImpact();
+    this.renderStages();
     this.renderSummary();
   }
 
-  renderDiagram() {
-    const container = document.querySelector('#cascade-diagram');
-    if (!container) return;
+  /**
+   * Render progression timeline showing cascade flow
+   */
+  renderTimeline() {
+    const container = document.querySelector('#cascade-timeline');
+    if (!container || !this.cascade) return;
 
-    // Create SVG-based cascade diagram
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 800 400');
-    svg.setAttribute('class', 'cascade-svg');
-    container.innerHTML = '';
-    container.appendChild(svg);
+    const stages = this.cascade.map((stage, index) => {
+      const isLast = index === this.cascade.length - 1;
+      return `
+        <div class="timeline-item" data-stage="${index}">
+          <div class="timeline-marker" style="background: ${this.getSeverityColor(stage.severity)};">
+            <span class="marker-number">${stage.stage}</span>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-system">${stage.system}</div>
+            <div class="timeline-delay">${stage.timestamp}h delay</div>
+          </div>
+          ${!isLast ? '<div class="timeline-arrow">→</div>' : ''}
+        </div>
+      `;
+    }).join('');
 
-    // Define systems and their positions
-    const systems = [
-      { id: 'environmental', label: '🌍 Environmental', x: 100, y: 200, color: '#10b981' },
-      { id: 'health', label: '🏥 Health', x: 300, y: 100, color: '#f59e0b' },
-      { id: 'agriculture', label: '🌾 Agriculture', x: 300, y: 300, color: '#06b6d4' },
-      { id: 'economy', label: '💰 Economy', x: 500, y: 200, color: '#ef4444' }
-    ];
-
-    // Draw connections
-    const connections = [
-      { from: 0, to: 1 },
-      { from: 0, to: 2 },
-      { from: 1, to: 3 },
-      { from: 2, to: 3 }
-    ];
-
-    connections.forEach(conn => {
-      const fromSys = systems[conn.from];
-      const toSys = systems[conn.to];
-
-      // Draw arrow line
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', fromSys.x + 60);
-      line.setAttribute('y1', fromSys.y);
-      line.setAttribute('x2', toSys.x - 60);
-      line.setAttribute('y2', toSys.y);
-      line.setAttribute('stroke', 'rgba(167, 139, 250, 0.3)');
-      line.setAttribute('stroke-width', '2');
-      line.setAttribute('marker-end', 'url(#arrowhead)');
-      svg.appendChild(line);
-    });
-
-    // Define arrow marker
-    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
-    marker.setAttribute('id', 'arrowhead');
-    marker.setAttribute('markerWidth', '10');
-    marker.setAttribute('markerHeight', '10');
-    marker.setAttribute('refX', '9');
-    marker.setAttribute('refY', '3');
-    marker.setAttribute('orient', 'auto');
-    const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    polygon.setAttribute('points', '0 0, 10 3, 0 6');
-    polygon.setAttribute('fill', 'rgba(167, 139, 250, 0.5)');
-    marker.appendChild(polygon);
-    defs.appendChild(marker);
-    svg.appendChild(defs);
-
-    // Draw system nodes
-    systems.forEach(sys => {
-      const affected = this.cascade.find(s => s.system === sys.id);
-      const severity = affected ? affected.severity : 0;
-
-      // Circle background
-      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      circle.setAttribute('cx', sys.x);
-      circle.setAttribute('cy', sys.y);
-      circle.setAttribute('r', 50 + severity * 20);
-      circle.setAttribute('fill', sys.color);
-      circle.setAttribute('opacity', '0.3');
-      circle.setAttribute('class', 'cascade-node');
-      svg.appendChild(circle);
-
-      // Circle border
-      const border = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      border.setAttribute('cx', sys.x);
-      border.setAttribute('cy', sys.y);
-      border.setAttribute('r', 50 + severity * 20);
-      border.setAttribute('fill', 'none');
-      border.setAttribute('stroke', sys.color);
-      border.setAttribute('stroke-width', '2');
-      svg.appendChild(border);
-
-      // Label
-      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', sys.x);
-      text.setAttribute('y', sys.y - 5);
-      text.setAttribute('text-anchor', 'middle');
-      text.setAttribute('fill', '#e2e8f0');
-      text.setAttribute('font-size', '14');
-      text.setAttribute('font-weight', 'bold');
-      text.textContent = sys.label.split(' ')[0];
-      svg.appendChild(text);
-
-      // Severity percentage
-      if (severity > 0) {
-        const severityText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        severityText.setAttribute('x', sys.x);
-        severityText.setAttribute('y', sys.y + 15);
-        severityText.setAttribute('text-anchor', 'middle');
-        severityText.setAttribute('fill', '#a78bfa');
-        severityText.setAttribute('font-size', '12');
-        severityText.setAttribute('font-weight', 'bold');
-        severityText.textContent = `${(severity * 100).toFixed(0)}%`;
-        svg.appendChild(severityText);
-      }
-    });
+    container.innerHTML = stages;
   }
 
-  renderTimeline() {
+  /**
+   * Render metrics impact grid
+   */
+  renderMetricsImpact() {
+    const container = document.querySelector('#cascade-metrics');
+    if (!container || !this.cascade) return;
+
+    const affectedSystems = this.model.getAffectedSystems(this.cascade);
+
+    const metrics = affectedSystems.map(sys => {
+      const severity = sys.maxSeverity;
+      const severityPercent = (severity * 100).toFixed(0);
+      const color = this.getSeverityColor(severity);
+
+      return `
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-name">${sys.system}</span>
+            <span class="metric-severity" style="color: ${color};">${severityPercent}%</span>
+          </div>
+          <div class="metric-bar">
+            <div class="metric-fill" style="width: ${severityPercent}%; background: ${color};"></div>
+          </div>
+          <div class="metric-stages">
+            <span class="metric-label">Stages affected: ${sys.stages.length}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = metrics;
+  }
+
+  /**
+   * Render detailed stages
+   */
+  renderStages() {
     const container = document.querySelector('#cascade-stages');
     if (!container || !this.cascade) return;
 
     const stages = this.cascade.map((stage, index) => `
-      <div class="cascade-stage" data-stage="${index}">
-        <div class="stage-number">${stage.stage}</div>
-        <div class="stage-content">
-          <div class="stage-system">${this.model.systemGraph[stage.system].icon} ${stage.system}</div>
-          <div class="stage-description">${stage.description}</div>
-          <div class="stage-severity">
-            <div class="severity-bar">
-              <div class="severity-fill" style="width: ${stage.severity * 100}%; background: ${this.getSeverityColor(stage.severity)};"></div>
-            </div>
-            <span class="severity-text">${(stage.severity * 100).toFixed(0)}%</span>
+      <div class="stage-card" data-stage="${index}">
+        <div class="stage-header">
+          <div class="stage-badge" style="background: ${this.getSeverityColor(stage.severity)};">
+            Stage ${stage.stage}
           </div>
-          <div class="stage-delay">Delay: ${stage.timestamp}h</div>
+          <div class="stage-title">${stage.system}</div>
+          <div class="stage-time">${stage.timestamp}h</div>
+        </div>
+        <div class="stage-body">
+          <p class="stage-description">${stage.description}</p>
+          <div class="stage-metrics">
+            <div class="metric-row">
+              <span class="metric-key">Severity:</span>
+              <span class="metric-val">${(stage.severity * 100).toFixed(0)}%</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-key">Impact Factor:</span>
+              <span class="metric-val">${(stage.impactFactor || 0.8).toFixed(2)}</span>
+            </div>
+            ${stage.sourceSystem ? `
+              <div class="metric-row">
+                <span class="metric-key">Source:</span>
+                <span class="metric-val">${stage.sourceSystem}</span>
+              </div>
+            ` : ''}
+          </div>
         </div>
       </div>
     `).join('');
@@ -252,74 +227,101 @@ export class CascadingFailureViz {
     container.innerHTML = stages;
   }
 
+  /**
+   * Render summary statistics
+   */
   renderSummary() {
     const container = document.querySelector('#cascade-summary');
     if (!container || !this.cascade) return;
 
     const affectedSystems = this.model.getAffectedSystems(this.cascade);
     const totalSeverity = affectedSystems.reduce((sum, s) => sum + s.maxSeverity, 0) / affectedSystems.length;
+    const maxStage = Math.max(...this.cascade.map(s => s.stage));
+    const totalTime = Math.max(...this.cascade.map(s => s.timestamp));
 
     const summary = `
-      <div class="summary-item">
-        <span class="summary-label">Systems Affected</span>
-        <span class="summary-value">${affectedSystems.length}</span>
-      </div>
-      <div class="summary-item">
-        <span class="summary-label">Cascade Stages</span>
-        <span class="summary-value">${Math.max(...this.cascade.map(s => s.stage)) + 1}</span>
-      </div>
-      <div class="summary-item">
-        <span class="summary-label">Average Severity</span>
-        <span class="summary-value">${(totalSeverity * 100).toFixed(0)}%</span>
-      </div>
-      <div class="summary-item">
-        <span class="summary-label">Total Propagation Time</span>
-        <span class="summary-value">${Math.max(...this.cascade.map(s => s.timestamp))}h</span>
+      <div class="summary-grid">
+        <div class="summary-stat">
+          <div class="summary-label">Systems Affected</div>
+          <div class="summary-value">${affectedSystems.length}</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-label">Cascade Stages</div>
+          <div class="summary-value">${maxStage + 1}</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-label">Average Severity</div>
+          <div class="summary-value">${(totalSeverity * 100).toFixed(0)}%</div>
+        </div>
+        <div class="summary-stat">
+          <div class="summary-label">Total Propagation</div>
+          <div class="summary-value">${totalTime}h</div>
+        </div>
       </div>
       <div class="summary-description">
-        ${this.model.generateDescription(this.cascade)}
+        <p>${this.model.generateDescription(this.cascade)}</p>
       </div>
     `;
 
     container.innerHTML = summary;
   }
 
+  /**
+   * Animate cascade progression
+   */
   animateCascade() {
     if (this.isAnimating || !this.cascade) return;
 
     this.isAnimating = true;
-    const stages = document.querySelectorAll('.cascade-stage');
 
-    stages.forEach((stage, index) => {
-      gsap.to(stage, {
+    // Animate timeline items
+    const timelineItems = document.querySelectorAll('.timeline-item');
+    timelineItems.forEach((item, index) => {
+      gsap.to(item, {
         opacity: 1,
         x: 0,
-        duration: 0.5,
-        delay: index * 0.3,
+        duration: 0.4,
+        delay: index * 0.2,
         ease: 'power2.out'
       });
     });
 
-    // Animate diagram nodes
-    const nodes = document.querySelectorAll('.cascade-node');
-    nodes.forEach((node, index) => {
-      gsap.to(node, {
-        opacity: 0.6,
-        duration: 0.5,
-        delay: index * 0.2,
+    // Animate stage cards
+    const stageCards = document.querySelectorAll('.stage-card');
+    stageCards.forEach((card, index) => {
+      gsap.to(card, {
+        opacity: 1,
+        y: 0,
+        duration: 0.4,
+        delay: index * 0.25,
+        ease: 'power2.out'
+      });
+    });
+
+    // Animate metric bars
+    const metricFills = document.querySelectorAll('.metric-fill');
+    metricFills.forEach((fill, index) => {
+      const width = fill.style.width;
+      gsap.to(fill, {
+        width: width,
+        duration: 0.6,
+        delay: index * 0.15,
         ease: 'power2.out'
       });
     });
 
     setTimeout(() => {
       this.isAnimating = false;
-    }, stages.length * 300 + 500);
+    }, stageCards.length * 250 + 500);
   }
 
+  /**
+   * Reset cascade animation
+   */
   resetCascade() {
-    const stages = document.querySelectorAll('.cascade-stage');
-    stages.forEach(stage => {
-      gsap.to(stage, {
+    const timelineItems = document.querySelectorAll('.timeline-item');
+    timelineItems.forEach(item => {
+      gsap.to(item, {
         opacity: 0,
         x: -20,
         duration: 0.3,
@@ -327,10 +329,20 @@ export class CascadingFailureViz {
       });
     });
 
-    const nodes = document.querySelectorAll('.cascade-node');
-    nodes.forEach(node => {
-      gsap.to(node, {
-        opacity: 0.1,
+    const stageCards = document.querySelectorAll('.stage-card');
+    stageCards.forEach(card => {
+      gsap.to(card, {
+        opacity: 0,
+        y: 20,
+        duration: 0.3,
+        ease: 'power2.in'
+      });
+    });
+
+    const metricFills = document.querySelectorAll('.metric-fill');
+    metricFills.forEach(fill => {
+      gsap.to(fill, {
+        width: '0%',
         duration: 0.3,
         ease: 'power2.in'
       });
