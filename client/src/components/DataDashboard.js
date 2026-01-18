@@ -180,26 +180,54 @@ export class DataDashboard {
     });
   }
 
+  formatValue(value, type) {
+    if (value === null || value === undefined) return '—';
+    
+    const num = parseFloat(value);
+    if (isNaN(num)) return '—';
+    
+    switch (type) {
+      case 'temperature':
+        return num.toFixed(1);
+      case 'percentage':
+        return Math.round(num);
+      case 'aqi':
+        return Math.round(num);
+      case 'index':
+        return Math.round(num);
+      default:
+        return Math.round(num);
+    }
+  }
+
   renderMetrics() {
     const container = document.querySelector('#metrics-panel');
     if (!container || !this.currentState) return;
 
     const metrics = [
-      { label: 'AQI', value: this.currentState.aqi, unit: '', icon: '💨' },
-      { label: 'Hospital Load', value: this.currentState.hospital_load, unit: '%', icon: '🏥' },
-      { label: 'Temperature', value: this.currentState.temperature, unit: '°C', icon: '🌡️' },
-      { label: 'Crop Supply', value: this.currentState.crop_supply, unit: '%', icon: '🌾' },
-      { label: 'Food Price Index', value: this.currentState.food_price_index, unit: '', icon: '💹' },
-      { label: 'Traffic', value: this.currentState.traffic_density, unit: '', icon: '🚗' }
+      { label: 'AQI', value: this.formatValue(this.currentState.aqi, 'aqi'), unit: '', icon: '💨', type: 'aqi' },
+      { label: 'Hospital Load', value: this.formatValue(this.currentState.hospital_load, 'percentage'), unit: '%', icon: '🏥', type: 'percentage' },
+      { label: 'Temperature', value: this.formatValue(this.currentState.temperature, 'temperature'), unit: '°C', icon: '🌡️', type: 'temperature' },
+      { label: 'Crop Supply', value: this.formatValue(this.currentState.crop_supply, 'percentage'), unit: '%', icon: '🌾', type: 'percentage' },
+      { label: 'Food Price Index', value: this.formatValue(this.currentState.food_price_index, 'index'), unit: '', icon: '💹', type: 'index' },
+      { label: 'Traffic', value: this.formatValue(this.currentState.traffic_density, 'percentage'), unit: '%', icon: '🚗', type: 'percentage' }
     ];
 
     container.innerHTML = metrics.map(m => `
-      <div class="metric-item glass">
+      <div class="metric-item glass" data-type="${m.type}">
         <div class="metric-icon">${m.icon}</div>
         <div class="metric-label">${m.label}</div>
-        <div class="metric-value">${m.value}${m.unit}</div>
+        <div class="metric-value">${m.value}<span class="metric-unit">${m.unit}</span></div>
       </div>
     `).join('');
+
+    gsap.from(container.querySelectorAll('.metric-item'), {
+      opacity: 0,
+      y: 20,
+      duration: 0.5,
+      stagger: 0.1,
+      ease: 'power2.out'
+    });
   }
 
   async runSimulation(container) {

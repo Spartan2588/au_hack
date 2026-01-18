@@ -219,7 +219,7 @@ export class HospitalDashboardPage {
 
         // Temperature
         const tempValue = document.getElementById('temp-value');
-        tempValue.textContent = `${state.temperature}°C`;
+        tempValue.textContent = `${parseFloat(state.temperature).toFixed(1)}°C`;
     }
 
     renderChart() {

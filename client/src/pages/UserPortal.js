@@ -308,7 +308,7 @@ export class UserPortalPage {
 
         // Temperature
         const tempValue = document.getElementById('temp-value');
-        tempValue.textContent = `${state.temperature}°C`;
+        tempValue.textContent = `${parseFloat(state.temperature).toFixed(1)}°C`;
 
         // Health Risk
         const healthValue = document.getElementById('health-value');

@@ -40,6 +40,21 @@ export class ApiClient {
     }
   }
 
+  async simulateScenarioDelta(params) {
+    try {
+      const response = await fetch(`${this.baseUrl}/scenario-delta`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      });
+      if (!response.ok) throw new Error('Failed to simulate scenario with deltas');
+      return await response.json();
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  }
+
   async getHistoricalData(cityId = 1, hours = 24) {
     try {
       const response = await fetch(`${this.baseUrl}/historical?city_id=${cityId}&hours=${hours}`);

@@ -200,48 +200,6 @@
   font-weight: 300;
 }
 
-/* Technology Stack */
-.tech-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 3rem;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.tech-category h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #a78bfa;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid rgba(167, 139, 250, 0.3);
-}
-
-.tech-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.tech-list li {
-  padding: 0.75rem 0;
-  color: #cbd5e1;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  font-weight: 300;
-  border-bottom: 1px solid rgba(167, 139, 250, 0.1);
-}
-
-.tech-list li:last-child {
-  border-bottom: none;
-}
-
-.tech-name {
-  color: #e2e8f0;
-  font-weight: 500;
-}
-
 /* Philosophy Grid */
 .philosophy-grid {
   display: grid;
@@ -428,11 +386,6 @@
   .philosophy-grid,
   .cities-grid {
     grid-template-columns: 1fr;
-  }
-
-  .tech-grid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
   }
 
   .feature-item {

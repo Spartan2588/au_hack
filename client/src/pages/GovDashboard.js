@@ -211,7 +211,7 @@ export class GovDashboardPage {
             </div>
             <div class="metric">
               <span class="metric-label">Temperature</span>
-              <span class="metric-value">${state.temperature}°C</span>
+              <span class="metric-value">${parseFloat(state.temperature).toFixed(1)}°C</span>
             </div>
             <div class="metric">
               <span class="metric-label">Hospital Load</span>

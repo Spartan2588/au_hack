@@ -114,6 +114,30 @@
   margin-top: 2rem;
 }
 
+.trend-message {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, rgba(30, 30, 60, 0.3) 0%, rgba(15, 15, 35, 0.3) 100%);
+  border: 1px solid rgba(167, 139, 250, 0.1);
+  border-radius: 1rem;
+  margin: 2rem 0;
+}
+
+.trend-message h3 {
+  font-size: 1.5rem;
+  color: #e2e8f0;
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+}
+
+.trend-message p {
+  font-size: 1rem;
+  color: #94a3b8;
+  line-height: 1.6;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
 .stat-item {
   display: flex;
   flex-direction: column;

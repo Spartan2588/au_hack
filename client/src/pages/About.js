@@ -119,45 +119,6 @@ export class AboutPage {
           </div>
         </section>
 
-        <!-- Technology Stack -->
-        <section class="about-section tech-section">
-          <div class="container">
-            <div class="section-header">
-              <h2>Technology Stack</h2>
-              <p>Built with modern, performant technologies for real-time intelligence</p>
-            </div>
-            <div class="tech-grid">
-              <div class="tech-category">
-                <h3>Frontend</h3>
-                <ul class="tech-list">
-                  <li><span class="tech-name">Vite</span> - Lightning-fast build tool with HMR</li>
-                  <li><span class="tech-name">Vanilla JavaScript</span> - ES6 modules for performance</li>
-                  <li><span class="tech-name">Three.js</span> - 3D visualization engine</li>
-                  <li><span class="tech-name">GSAP</span> - GPU-accelerated animations</li>
-                  <li><span class="tech-name">Plotly.js</span> - Interactive data charts</li>
-                </ul>
-              </div>
-              <div class="tech-category">
-                <h3>Backend</h3>
-                <ul class="tech-list">
-                  <li><span class="tech-name">Node.js</span> - High-performance runtime</li>
-                  <li><span class="tech-name">Express.js</span> - RESTful API framework</li>
-                  <li><span class="tech-name">Real-time Data Store</span> - In-memory analytics</li>
-                </ul>
-              </div>
-              <div class="tech-category">
-                <h3>Architecture</h3>
-                <ul class="tech-list">
-                  <li><span class="tech-name">RESTful API</span> - 6 core endpoints</li>
-                  <li><span class="tech-name">Component-based</span> - Modular frontend architecture</li>
-                  <li><span class="tech-name">SPA Router</span> - Client-side navigation</li>
-                  <li><span class="tech-name">Responsive Design</span> - Mobile-first approach</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <!-- Approach -->
         <section class="about-section philosophy-section">
           <div class="container">

@@ -6,51 +6,333 @@
   font-size: 1.5rem;
   margin-bottom: 1.5rem;
   color: #e2e8f0;
+  font-weight: 600;
+  text-align: center;
 }
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
 .metric-card {
-  padding: 1.5rem;
+  padding: 2rem 1.5rem;
   text-align: center;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, rgba(30, 30, 60, 0.6) 0%, rgba(15, 15, 35, 0.6) 100%);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 20px;
+  backdrop-filter: blur(15px);
+  position: relative;
+  overflow: hidden;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .metric-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(167, 139, 250, 0.4);
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.15) 0%, rgba(30, 30, 60, 0.7) 100%);
+  box-shadow: 0 20px 60px rgba(167, 139, 250, 0.2);
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #a78bfa, #06b6d4, #10b981, #f59e0b);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.metric-card:hover::before {
+  opacity: 1;
+}
+
+.metric-card::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.4s ease;
+  z-index: 0;
+}
+
+.metric-card:hover::after {
+  width: 200px;
+  height: 200px;
 }
 
 .metric-icon {
-  font-size: 2rem;
+  font-size: 3rem;
   margin-bottom: 0.5rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+  transition: all 0.4s ease;
+  z-index: 2;
+  position: relative;
+}
+
+.metric-card:hover .metric-icon {
+  transform: scale(1.2) rotate(5deg);
+  filter: drop-shadow(0 8px 16px rgba(167, 139, 250, 0.3));
+}
+
+.metric-label {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  z-index: 2;
+  position: relative;
+  opacity: 0.9;
+  transition: all 0.3s ease;
+}
+
+.metric-card:hover .metric-label {
+  color: #e2e8f0;
+  opacity: 1;
+}
+
+.metric-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #e2e8f0;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.3rem;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  z-index: 2;
+  position: relative;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.metric-card:hover .metric-value {
+  transform: scale(1.05);
+  text-shadow: 0 4px 16px rgba(167, 139, 250, 0.4);
+}
+
+.metric-unit {
+  font-size: 1.2rem;
+  color: #a78bfa;
+  margin-left: 0.3rem;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(167, 139, 250, 0.3);
+}
+
+.metric-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(167, 139, 250, 0.3);
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.08) 0%, rgba(30, 30, 60, 0.5) 100%);
+  box-shadow: 0 10px 30px rgba(167, 139, 250, 0.1);
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #a78bfa, #06b6d4, #10b981);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.metric-card:hover::before {
+  opacity: 1;
+}
+
+.metric-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  transition: transform 0.3s ease;
+}
+
+.metric-card:hover .metric-icon {
+  transform: scale(1.1);
 }
 
 .metric-label {
   color: #94a3b8;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   margin-bottom: 0.5rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
 .metric-value {
-  font-size: 1.8rem;
+  font-size: 2.2rem;
   font-weight: 700;
-  color: #a78bfa;
+  color: #e2e8f0;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .metric-unit {
-  font-size: 0.9rem;
-  color: #64748b;
+  font-size: 1rem;
+  color: #a78bfa;
+  font-weight: 500;
   margin-left: 0.25rem;
+}
+
+/* Enhanced color coding for different metric types */
+.metric-card[data-type="aqi"] {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.metric-card[data-type="aqi"]:hover {
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 20px 60px rgba(239, 68, 68, 0.2);
+}
+
+.metric-card[data-type="aqi"] .metric-value {
+  color: #fca5a5;
+}
+
+.metric-card[data-type="aqi"]:hover .metric-value {
+  color: #ef4444;
+}
+
+.metric-card[data-type="percentage"] {
+  border-color: rgba(6, 182, 212, 0.3);
+}
+
+.metric-card[data-type="percentage"]:hover {
+  border-color: rgba(6, 182, 212, 0.5);
+  box-shadow: 0 20px 60px rgba(6, 182, 212, 0.2);
+}
+
+.metric-card[data-type="percentage"] .metric-value {
+  color: #67e8f9;
+}
+
+.metric-card[data-type="percentage"]:hover .metric-value {
+  color: #06b6d4;
+}
+
+.metric-card[data-type="temperature"] {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.metric-card[data-type="temperature"]:hover {
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 20px 60px rgba(245, 158, 11, 0.2);
+}
+
+.metric-card[data-type="temperature"] .metric-value {
+  color: #fbbf24;
+}
+
+.metric-card[data-type="temperature"]:hover .metric-value {
+  color: #f59e0b;
+}
+
+.metric-card[data-type="index"] {
+  border-color: rgba(167, 139, 250, 0.3);
+}
+
+.metric-card[data-type="index"]:hover {
+  border-color: rgba(167, 139, 250, 0.5);
+  box-shadow: 0 20px 60px rgba(167, 139, 250, 0.2);
+}
+
+.metric-card[data-type="index"] .metric-value {
+  color: #c4b5fd;
+}
+
+.metric-card[data-type="index"]:hover .metric-value {
+  color: #a78bfa;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    padding: 0 0.5rem;
+  }
 }
 
 @media (max-width: 768px) {
   .metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    padding: 0;
+  }
+  
+  .metric-card {
+    padding: 1.8rem 1.2rem;
+    min-height: 160px;
+  }
+  
+  .metric-value {
+    font-size: 2.2rem;
+  }
+  
+  .metric-icon {
+    font-size: 2.5rem;
+  }
+  
+  .metric-label {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .metric-card {
+    padding: 1.5rem 1rem;
+    min-height: 140px;
+  }
+  
+  .metric-value {
+    font-size: 1.8rem;
+  }
+  
+  .metric-icon {
+    font-size: 2.2rem;
+  }
+  
+  .metric-label {
+    font-size: 0.8rem;
   }
 }

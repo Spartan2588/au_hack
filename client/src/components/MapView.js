@@ -295,8 +295,8 @@ export class MapView {
       <div style="padding: 15px; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(167, 139, 250, 0.2); border-radius: 8px;">
         <h3 style="margin: 0 0 10px 0; font-size: 1.1rem; color: #a78bfa;">${this.currentState.city}</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem;">
-            <div>AQI: <span style="color: #fff;">${this.currentState.aqi}</span></div>
-            <div>Temp: <span style="color: #fff;">${this.currentState.temperature}°C</span></div>
+            <div>AQI: <span style="color: #fff;">${Math.round(this.currentState.aqi)}</span></div>
+            <div>Temp: <span style="color: #fff;">${parseFloat(this.currentState.temperature).toFixed(1)}°C</span></div>
             <div>Env Risk: <span style="color: #ef4444;">${env.probability}%</span></div>
             <div>Health: <span style="color: #10b981;">${Math.round(this.currentState.hospital_load)}%</span></div>
         </div>

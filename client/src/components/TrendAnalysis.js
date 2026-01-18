@@ -1,6 +1,5 @@
 import { ApiClient } from '../utils/api.js';
 import { SimulationEngine } from '../utils/SimulationEngine.js';
-import { TrendGraph } from './TrendGraph.js';
 import { SimpleRadarChart } from './SimpleRadarChart.js';
 import { RiskDomainCalculator } from '../utils/RiskDomainCalculator.js';
 import { LiveDataService } from '../utils/LiveDataService.js';
@@ -16,47 +15,9 @@ export class TrendAnalysis {
     this.currentCity = 1;
     this.currentScenario = null;
     this.baselineState = null;
-    this.baselineProjection = null;
-    this.simulationProjection = null;
-    this.graphs = {};
     this.radarChart = null;
     this.autoRefreshInterval = null;
     this.previousRiskScores = null;
-  }
-
-  /**
-   * Generate fallback data for detailed time series (local fixes)
-   */
-  generateFallbackData(hours = 24) {
-    const fallback = {
-      environmental_risk: [],
-      health_risk: [],
-      food_security_risk: [],
-      aqi: [],
-      hospital_load: [],
-      crop_supply: [],
-      temperature: [],
-      food_price_index: [],
-      timestamps: []
-    };
-
-    for (let h = 0; h < hours; h++) {
-      const progress = h / hours;
-      const sine = Math.sin(progress * Math.PI);
-
-      fallback.environmental_risk.push(Math.round(40 + sine * 20));
-      fallback.health_risk.push(Math.round(35 + sine * 15));
-      fallback.food_security_risk.push(Math.round(25 + sine * 10));
-      fallback.aqi.push(Math.round(150 + sine * 50));
-      fallback.temperature.push(Math.round((25 + sine * 5) * 10) / 10);
-      fallback.hospital_load.push(Math.round(50 + sine * 20));
-      fallback.crop_supply.push(Math.round(70 - sine * 15));
-      fallback.food_price_index.push(Math.round(100 + sine * 20));
-      fallback.timestamps.push(new Date(Date.now() + h * 3600000));
-    }
-
-    console.warn('⚠ Using fallback data for graphs (localhost only)');
-    return fallback;
   }
 
   async render(container) {
@@ -65,7 +26,7 @@ export class TrendAnalysis {
         <div class="trend-header">
           <h2>Trend Analysis</h2>
           <div class="trend-controls">
-            <button id="trend-refresh" class="trend-btn">🔄 Refresh All Data</button>
+            <button id="trend-refresh" class="trend-btn">🔄 Refresh Data</button>
             <span id="auto-refresh-status" class="status-badge" style="margin-left: 10px; padding: 5px 10px; background: #10b981; color: white; border-radius: 4px; font-size: 0.85em; font-weight: 600;">AUTO-REFRESH: ON (5min)</span>
             <span id="loading-spinner" class="spinner" style="display: none; margin-left: 10px;">🔄 Loading...</span>
             <span id="last-updated" class="timestamp" style="margin-left: 15px; font-size: 0.9em; color: #888;"></span>
@@ -73,7 +34,7 @@ export class TrendAnalysis {
         </div>
 
         <div class="trend-info">
-          <p id="trend-description">Baseline vs Simulation Comparison - 24 Hour Projection</p>
+          <p id="trend-description">Real-time risk monitoring and analysis dashboard</p>
         </div>
 
         <!-- High-Level Risk Radar -->
@@ -84,66 +45,6 @@ export class TrendAnalysis {
           </div>
         </div>
 
-        <!-- Detailed Risk Trends -->
-        <div class="trend-section">
-          <h3>Temporal Risk Trends</h3>
-          <div class="trend-grid">
-            <div class="trend-card">
-              <h4>Environmental Risk</h4>
-              <canvas id="env-risk-chart" class="trend-canvas" width="400" height="280"></canvas>
-            </div>
-            <div class="trend-card">
-              <h4>Health Risk</h4>
-              <canvas id="health-risk-chart" class="trend-canvas" width="400" height="280"></canvas>
-            </div>
-            <div class="trend-card">
-              <h4>Food Security Risk</h4>
-              <canvas id="food-risk-chart" class="trend-canvas" width="400" height="280"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- Environmental Metrics -->
-        <div class="trend-section">
-          <h3>Environmental Metrics</h3>
-          <div class="trend-grid">
-            <div class="trend-card">
-              <h4>Air Quality Index (AQI)</h4>
-              <canvas id="aqi-chart" class="trend-canvas" width="400" height="280"></canvas>
-            </div>
-            <div class="trend-card">
-              <h4>Temperature</h4>
-              <canvas id="temperature-chart" class="trend-canvas" width="400" height="280"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- Health Metrics -->
-        <div class="trend-section">
-          <h3>Health Metrics</h3>
-          <div class="trend-grid">
-            <div class="trend-card">
-              <h4>Hospital Load</h4>
-              <canvas id="hospital-chart" class="trend-canvas" width="400" height="280"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- Agriculture & Food Metrics -->
-        <div class="trend-section">
-          <h3>Agriculture & Food Security</h3>
-          <div class="trend-grid">
-            <div class="trend-card">
-              <h4>Crop Supply</h4>
-              <canvas id="crop-chart" class="trend-canvas" width="400" height="280"></canvas>
-            </div>
-            <div class="trend-card">
-              <h4>Food Price Index</h4>
-              <canvas id="foodprice-chart" class="trend-canvas" width="400" height="280"></canvas>
-            </div>
-          </div>
-        </div>
-
         <!-- Statistics -->
         <div class="trend-stats">
           <div class="stat-item">
@@ -151,19 +52,24 @@ export class TrendAnalysis {
             <span id="scenario-type" class="stat-value">—</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Projection Period</span>
-            <span id="projection-period" class="stat-value">24h</span>
+            <span class="stat-label">Monitoring Status</span>
+            <span id="projection-period" class="stat-value">Active</span>
           </div>
           <div class="stat-item">
             <span class="stat-label">City</span>
             <span id="city-name" class="stat-value">—</span>
           </div>
         </div>
+
+        <div class="trend-message">
+          <h3>Advanced Risk Intelligence</h3>
+          <p>The radar chart above displays real-time systemic risk assessment across multiple domains including environmental, health, infrastructure, and security factors. This comprehensive view enables proactive decision-making for urban resilience.</p>
+        </div>
       </div>
     `;
 
     this.setupEventListeners(container);
-    this.initializeGraphs(container);
+    this.initializeRadarChart(container);
     await this.loadData();
     await this.loadLiveData();
   }
@@ -200,26 +106,7 @@ export class TrendAnalysis {
     });
   }
 
-  initializeGraphs(container) {
-    // Initialize Time-Series Graphs
-    const graphConfigs = [
-      { id: 'env-risk-chart', title: 'Environmental Risk', unit: '%', color: '#10b981' },
-      { id: 'health-risk-chart', title: 'Health Risk', unit: '%', color: '#f59e0b' },
-      { id: 'food-risk-chart', title: 'Food Security Risk', unit: '%', color: '#06b6d4' },
-      { id: 'aqi-chart', title: 'AQI', unit: 'points', color: '#ef4444' },
-      { id: 'temperature-chart', title: 'Temperature', unit: '°C', color: '#f59e0b' },
-      { id: 'hospital-chart', title: 'Hospital Load', unit: '%', color: '#ef4444' },
-      { id: 'crop-chart', title: 'Crop Supply', unit: '%', color: '#10b981' },
-      { id: 'foodprice-chart', title: 'Food Price Index', unit: 'index', color: '#a78bfa' }
-    ];
-
-    graphConfigs.forEach(config => {
-      const graph = new TrendGraph(config.id, config.title, config.unit, config.color);
-      if (graph.init(container)) {
-        this.graphs[config.id] = graph;
-      }
-    });
-
+  initializeRadarChart(container) {
     // Initialize Radar Chart
     this.radarChart = new SimpleRadarChart('radar-chart');
     if (this.radarChart.init(container)) {
@@ -237,29 +124,12 @@ export class TrendAnalysis {
   async loadData() {
     try {
       this.baselineState = await this.api.getCurrentState(this.currentCity);
-      this.baselineProjection = this.engine.generateBaseline(this.baselineState, 24);
-
-      if (!this.baselineProjection || !this.baselineProjection.environmental_risk) {
-        this.baselineProjection = this.generateFallbackData(24);
-      }
-
-      if (this.currentScenario) {
-        this.simulationProjection = this.engine.runSimulation(this.baselineState, this.currentScenario, 24);
-        if (!this.simulationProjection || !this.simulationProjection.environmental_risk) {
-          this.simulationProjection = this.generateFallbackData(24);
-        }
-      } else {
-        this.simulationProjection = this.baselineProjection;
-      }
-
-      this.updateGraphs();
       this.updateStatistics();
+      this.startAutoRefresh();
     } catch (error) {
       console.error('Failed to load trend data:', error);
-      this.baselineProjection = this.generateFallbackData(24);
-      this.simulationProjection = this.generateFallbackData(24);
-      this.updateGraphs();
       this.updateStatistics();
+      this.startAutoRefresh();
     }
   }
 
@@ -304,26 +174,6 @@ export class TrendAnalysis {
     } finally {
       if (spinner) spinner.style.display = 'none';
     }
-  }
-
-  updateGraphs() {
-    if (!this.baselineProjection || !this.simulationProjection) return;
-
-    const updateGraph = (graphId, baselineKey, simulationKey) => {
-      const graph = this.graphs[graphId];
-      if (!graph) return;
-      graph.updateData(this.baselineProjection[baselineKey] || [], this.simulationProjection[simulationKey] || []);
-      graph.animateUpdate();
-    };
-
-    updateGraph('env-risk-chart', 'environmental_risk', 'environmental_risk');
-    updateGraph('health-risk-chart', 'health_risk', 'health_risk');
-    updateGraph('food-risk-chart', 'food_security_risk', 'food_security_risk');
-    updateGraph('aqi-chart', 'aqi', 'aqi');
-    updateGraph('temperature-chart', 'temperature', 'temperature');
-    updateGraph('hospital-chart', 'hospital_load', 'hospital_load');
-    updateGraph('crop-chart', 'crop_supply', 'crop_supply');
-    updateGraph('foodprice-chart', 'food_price_index', 'food_price_index');
   }
 
   updateStatistics() {

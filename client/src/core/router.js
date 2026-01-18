@@ -3,7 +3,6 @@ import { PageTransition } from '../components/PageTransition.js';
 import { HomePage } from '../pages/Home.js';
 import { PlatformPage } from '../pages/Platform.js';
 import { ScenariosPage } from '../pages/Scenarios.js';
-import { ImpactPage } from '../pages/Impact.js';
 import { AboutPage } from '../pages/About.js';
 import { TrendsPage } from '../pages/Trends.js';
 import { MapPage } from '../pages/Map.js';
@@ -19,7 +18,6 @@ export class Router {
       '/': HomePage,
       '/platform': PlatformPage,
       '/scenarios': ScenariosPage,
-      '/impact': ImpactPage,
       '/about': AboutPage,
       '/trends': TrendsPage,
       '/map': MapPage,
