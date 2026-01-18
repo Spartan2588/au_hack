@@ -1,173 +1,75 @@
-# Urban Risk Assessment Dashboard
+# Urban Intelligence Platform & Risk Assessment Dashboard
 
-A modern, interactive dashboard for monitoring environmental, health, and food security risks across Indian cities. Built with React and Node.js, inspired by useorigin.com's design aesthetic.
+**A real-time, physics-aware simulation engine and interactive dashboard for urban resilience planning.**
 
-## Features
+---
 
-- **City Selector**: Switch between Mumbai, Delhi, and Bangalore
-- **Risk Assessment Cards**: Real-time environmental, health, and food security risk levels
-- **Current Metrics**: AQI, hospital load, temperature, crop supply, food price index, and traffic density
-- **Scenario Analysis**: Pre-built scenarios (Normal, Heatwave, Drought, Crisis)
-- **Custom Sliders**: Adjust parameters and calculate custom impact scenarios
-- **Scenario Comparison**: Side-by-side baseline vs. intervention comparison
-- **Economic Impact**: View intervention costs, savings, and ROI
-- **Historical Charts**: 24-hour trend visualization using Plotly
-- **Recommendations**: AI-generated action items based on risk levels
+## 🚀 Key Features
 
-## Tech Stack
+### 🌎 Interactive Maps with Cascading Risks
+Visualize how localized events (like a flood in one zone) trigger cascading risks across the city:
+*   **Layered Impact**: Environmental stress ripples into public health and food logistics.
+*   **Visual Logic**: Color-coded risk zones (Green/Yellow/Red) evolve instantly as you simulate scenarios.
 
-- **Frontend**: React 18, CSS3 with modern gradients and animations
-- **Backend**: Node.js with Express
-- **Charts**: Plotly.js
-- **Styling**: Custom CSS with glassmorphism design
+### 💻 Integrated Web Interfaces
+The system provides both a modern physics-aware simulation engine and a high-performance risk dashboard:
+*   **Scenario Chat**: Speak to the city engine naturally (e.g., *"Simulate a 3-day heatwave"*).
+*   **Live Dashboard**: Monitor real-time AQI, Hospital Load, Crop Supply, and Market Metrics.
+*   **Economic Impact**: View intervention costs, savings, and ROI for different scenarios.
+*   **Historical Trends**: 24-hour visualization of city metrics using Plotly.
 
-## Setup Instructions
+### 🧠 Physics-Aware Simulation
+Our "Scenario Delta" engine respects physical reality:
+*   **Context Awareness**: Distinguishes between "Short" vs. "Prolonged" events.
+*   **Real-World Physics**: Captures complex interactions like "flood-induced AQI washout" vs. "heatwave Ozone spikes."
 
-### Prerequisites
+---
 
-- Node.js (v14 or higher)
-- npm or yarn
+## 🛠️ Installation & Setup
 
-### Installation
-
-1. Clone the repository:
+### 1. Backend Setup (Simulation Engine & API)
+The backend powers the simulation engine, database, and risk models.
 ```bash
-git clone <repository-url>
-cd risk-dashboard
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the API server
+python api/run.py
 ```
+*Server starts at `http://localhost:8000`*
 
-2. Install root dependencies:
+### 2. Frontend Setup (Interactive Interface)
 ```bash
+cd frontend
 npm install
+npm run dev
 ```
+*Access the interface at `http://localhost:5173`*
 
-3. Install client dependencies:
+### 3. Legacy Dashboard Setup (Node.js)
+If you are using the original Node.js dashboard components:
 ```bash
-cd client
+# Install root dependencies
 npm install
-cd ..
-```
 
-### Running the Application
-
-**Development Mode** (runs both server and client):
-```bash
+# Build and run
 npm run dev
 ```
 
-This will start:
-- Backend server on `http://localhost:5000`
-- Frontend on `http://localhost:3000`
+---
 
-**Production Build**:
-```bash
-npm run build
-```
+## 📂 Repository Structure
 
-## API Endpoints
+*   **/api**: FastApi backend, simulation logic, and ML models.
+*   **/frontend**: React application with Mapbox integration and GSAP animations.
+*   **/model**: Risk Engine core logic and data generators.
+*   **/client**: Legacy React frontend components.
+*   **/scripts**: Utility scripts for data analysis and verification.
+*   **/docs**: Documentation and dataset analysis.
 
-### Get Current State
-```
-GET /api/v1/current-state?city_id={city_id}
-```
-Returns current metrics for a city.
+---
 
-### Get Risk Assessment
-```
-GET /api/v1/risk-assessment?city_id={city_id}
-```
-Returns current risk levels and probabilities.
-
-### Calculate Scenario
-```
-POST /api/v1/scenario
-Content-Type: application/json
-
-{
-  "aqi": 150,
-  "hospital_load": 50,
-  "crop_supply": 70,
-  "temperature": 30
-}
-```
-Returns baseline vs. intervention comparison and economic impact.
-
-### Get Historical Data
-```
-GET /api/v1/historical?city_id={city_id}&hours=24
-```
-Returns time-series data for the last N hours.
-
-## Project Structure
-
-```
-risk-dashboard/
-├── server.js                 # Express backend
-├── package.json
-├── client/
-│   ├── public/
-│   │   └── index.html
-│   ├── src/
-│   │   ├── App.js
-│   │   ├── App.css
-│   │   ├── index.js
-│   │   ├── index.css
-│   │   └── components/
-│   │       ├── CitySelector.js
-│   │       ├── RiskCards.js
-│   │       ├── MetricsDisplay.js
-│   │       ├── ScenarioButtons.js
-│   │       ├── CustomSliders.js
-│   │       ├── ComparisonDisplay.js
-│   │       ├── EconomicImpact.js
-│   │       ├── HistoricalCharts.js
-│   │       ├── RecommendationsList.js
-│   │       └── [component].css files
-│   └── package.json
-└── README.md
-```
-
-## Design Features
-
-- **Glassmorphism**: Semi-transparent cards with backdrop blur effects
-- **Dark Theme**: Slate and blue color palette for reduced eye strain
-- **Responsive Grid**: Adapts to different screen sizes
-- **Smooth Animations**: Hover effects and transitions throughout
-- **Accessibility**: Semantic HTML and proper color contrast
-
-## Customization
-
-### Adding New Cities
-Edit `server.js` and add to the `cityData` object:
-```javascript
-const cityData = {
-  1: { name: 'Mumbai', lat: 19.0760, lng: 72.8777 },
-  2: { name: 'Delhi', lat: 28.7041, lng: 77.1025 },
-  3: { name: 'Bangalore', lat: 12.9716, lng: 77.5946 },
-  4: { name: 'Your City', lat: 0.0000, lng: 0.0000 }
-};
-```
-
-### Modifying Risk Thresholds
-Update the risk calculation logic in `server.js` POST `/api/v1/scenario` endpoint.
-
-### Changing Colors
-Edit the CSS files in `client/src/components/` to modify the color scheme.
-
-## Future Enhancements
-
-- Real API integration with actual environmental data
-- User authentication and saved scenarios
-- Export reports as PDF
-- Mobile app version
-- Real-time notifications
-- Machine learning predictions
-- Multi-language support
-
-## License
-
-MIT
-
-## Support
-
-For issues or questions, please open an issue in the repository.
+## 🧪 Quick Test prompts
+Try these in the Scenario Chat:
+1.  *"Severe flood in Mumbai"* (Observe AQI improvement + Logistics impact)
+2.  *"Toxic smog event in Delhi"* (Observe AQI spike + Health risk)
