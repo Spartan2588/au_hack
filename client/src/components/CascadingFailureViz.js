@@ -60,13 +60,14 @@ export class CascadingFailureViz {
             <label for="severity-slider">Severity: <span id="severity-value">0.8</span></label>
             <input type="range" id="severity-slider" min="0.1" max="1.0" step="0.1" value="0.8" class="cascade-slider">
           </div>
-          <div class="control-group">
+          <div class="control-group" style="display: flex; gap: 10px; align-items: center;">
             <button id="cascade-simulate" class="cascade-btn primary">🔄 Simulate Cascade</button>
             <button id="cascade-compare" class="cascade-btn secondary">📊 Add to Comparison</button>
           </div>
           <div class="control-group">
-            <label>
-              <input type="checkbox" id="monte-carlo-toggle"> Enable Monte Carlo (Uncertainty)
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="monte-carlo-toggle" style="width: 18px; height: 18px;"> 
+              <span>Enable Monte Carlo (Uncertainty)</span>
             </label>
           </div>
         </div>
@@ -92,8 +93,10 @@ export class CascadingFailureViz {
             <div class="network-graph-container">
               <div class="graph-controls">
                 <button id="play-pause-btn" class="cascade-btn small">▶️ Play</button>
-                <label for="time-slider">Time: <span id="time-display">0h</span></label>
-                <input type="range" id="time-slider" min="0" max="24" step="0.5" value="0" class="cascade-slider">
+                <div class="slider-wrapper">
+                  <label for="time-slider">Time: <span id="time-display">0h</span></label>
+                  <input type="range" id="time-slider" min="0" max="24" step="0.5" value="0" class="cascade-slider">
+                </div>
                 <button id="reset-animation" class="cascade-btn small">⏮️ Reset</button>
               </div>
               <div id="network-graph" class="network-graph"></div>
@@ -125,7 +128,7 @@ export class CascadingFailureViz {
                 <h3>Economic Impact Over Time</h3>
                 <div id="economic-chart" class="plotly-chart"></div>
               </div>
-              <div class="chart-section" id="monte-carlo-charts">
+              <div class="chart-section" id="monte-carlo-charts" style="display: none;">
                 <h3>Uncertainty Ranges (Monte Carlo)</h3>
                 <div id="uncertainty-chart" class="plotly-chart"></div>
               </div>
@@ -176,11 +179,11 @@ export class CascadingFailureViz {
   setupEventListeners(container) {
     const simulateBtn = container.querySelector('#cascade-simulate');
     const compareBtn = container.querySelector('#cascade-compare');
+    const clearCompareBtn = container.querySelector('#clear-comparison');
     const citySelect = container.querySelector('#city-select');
     const triggerSelect = container.querySelector('#trigger-select');
     const severitySlider = container.querySelector('#severity-slider');
     const severityValue = container.querySelector('#severity-value');
-    const clearCompareBtn = container.querySelector('#clear-comparison');
 
     // Update severity display
     severitySlider.addEventListener('input', (e) => {
@@ -216,11 +219,37 @@ export class CascadingFailureViz {
     }
   }
 
-  /**
-   * Add current scenario to comparison
-   */
+  setupTabs() {
+    if (!this.container) return;
+    const tabBtns = this.container.querySelectorAll('.tab-btn');
+    const tabContents = this.container.querySelectorAll('.tab-content');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabId = btn.dataset.tab;
+
+        // Update button states
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Update content visibility
+        tabContents.forEach(content => {
+          content.classList.remove('active');
+          if (content.id === `tab-${tabId}`) {
+            content.classList.add('active');
+          }
+        });
+
+        // Trigger resize for charts if needed
+        if (tabId === 'charts') {
+          window.dispatchEvent(new Event('resize'));
+        }
+      });
+    });
+  }
+
   addToComparison() {
-    if (!this.cascadeData) return;
+    if (!this.cascadeData || !this.container) return;
 
     const citySelect = this.container.querySelector('#city-select');
     const triggerSelect = this.container.querySelector('#trigger-select');
@@ -231,16 +260,17 @@ export class CascadingFailureViz {
       city: this.cities.find(c => c.id === parseInt(citySelect.value))?.name || 'Unknown',
       trigger: triggerSelect.value,
       severity: parseFloat(severitySlider.value),
-      data: { ...this.cascadeData }
+      data: JSON.parse(JSON.stringify(this.cascadeData))
     };
 
     this.comparisonScenarios.push(scenario);
     this.renderComparison();
+
+    // Switch to comparison tab
+    const compTabBtn = this.container.querySelector('.tab-btn[data-tab="comparison"]');
+    if (compTabBtn) compTabBtn.click();
   }
 
-  /**
-   * Render comparison view
-   */
   renderComparison() {
     if (!this.container) return;
 
@@ -277,7 +307,7 @@ export class CascadingFailureViz {
             </div>
             <div class="stat-item">
               <span class="stat-label">Cost:</span>
-              <span class="stat-value">$${((impact.estimated_economic_cost || 0) / 1000000).toFixed(0)}M</span>
+              <span class="stat-value">$${((impact.estimated_economic_cost || 0) / 1000000).toFixed(1)}M</span>
             </div>
             <div class="stat-item">
               <span class="stat-label">Recovery:</span>
@@ -300,34 +330,25 @@ export class CascadingFailureViz {
     });
   }
 
-  /**
-   * Clear all comparisons
-   */
   clearComparison() {
     this.comparisonScenarios = [];
     this.renderComparison();
   }
 
   async loadCascadeData(cityId = null, trigger = 'power', severity = 0.8, monteCarlo = false) {
-    if (!this.container) {
-      console.error('Container not initialized');
-      return;
-    }
+    if (!this.container) return;
 
     const loadingEl = this.container.querySelector('#cascade-loading');
     const contentEl = this.container.querySelector('#cascade-content');
-
-    // Use provided cityId or current cityId
     const selectedCityId = cityId !== null ? cityId : this.currentCityId;
 
     try {
-      // Show loading state
       if (loadingEl) loadingEl.classList.remove('hidden');
       if (contentEl) contentEl.classList.add('hidden');
 
-      console.log(`[Cascade] Loading cascade data: cityId=${selectedCityId}, trigger=${trigger}, severity=${severity}`);
+      console.log(`[Cascade] Fetching data: cityId=${selectedCityId}, trigger=${trigger}, severity=${severity}`);
 
-      // Fetch real cascade data from API with cache-busting
+      // Use API Client for better error handling and structure
       const timestamp = Date.now();
       let url = `/api/v1/cascading-failure?city_id=${selectedCityId}&trigger=${trigger}&severity=${severity}&duration=24&_t=${timestamp}`;
       if (monteCarlo) {
@@ -340,41 +361,34 @@ export class CascadingFailureViz {
       }
       this.cascadeData = await response.json();
 
-      console.log('[Cascade] Data received:', this.cascadeData);
+      // Show/hide monte carlo charts
+      const mcCharts = this.container.querySelector('#monte-carlo-charts');
+      if (mcCharts) {
+        mcCharts.style.display = monteCarlo ? 'block' : 'none';
+      }
 
-      // Render the data
       this.renderRealCascade();
 
-      // Hide loading, show content
       if (loadingEl) loadingEl.classList.add('hidden');
       if (contentEl) contentEl.classList.remove('hidden');
 
     } catch (error) {
-      console.error('[Cascade] Failed to load cascade data:', error);
-
-      // Extract error message - fetch errors don't have response property
+      console.error('[Cascade] Failed to load data:', error);
       let errorMessage = error.message || 'Unknown error occurred';
-
-      // If error has data property (from our API client), use it
-      if (error.data) {
-        errorMessage = error.data.message || error.data.error || errorMessage;
-      }
+      if (error.data) errorMessage = error.data.message || error.data.error || errorMessage;
 
       if (loadingEl) {
         loadingEl.innerHTML = `
-          <div class="error-message">
-            <p>❌ Failed to load cascade data</p>
-            <p class="error-detail">${errorMessage}</p>
-            <p class="error-hint">Please ensure the backend server is running on port 5000</p>
-            <button id="retry-cascade" class="cascade-btn">Retry</button>
+          <div class="error-message" style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 8px; padding: 20px; text-align: center;">
+            <p style="font-size: 1.2rem; margin-bottom: 10px;">❌ Failed to load cascade data</p>
+            <p style="color: #94a3b8; margin-bottom: 15px;">${errorMessage}</p>
+            <button id="retry-cascade" class="cascade-btn primary">Retry Simulation</button>
           </div>
         `;
-
-        // Add retry button handler
         const retryBtn = loadingEl.querySelector('#retry-cascade');
         if (retryBtn) {
           retryBtn.addEventListener('click', () => {
-            this.loadCascadeData(selectedCityId, trigger, severity);
+            this.loadCascadeData(selectedCityId, trigger, severity, monteCarlo);
           });
         }
       }
@@ -383,74 +397,61 @@ export class CascadingFailureViz {
 
   renderRealCascade() {
     if (!this.cascadeData) return;
-
     this.renderRealTimeline();
     this.renderRealMetrics();
     this.renderRealImpact();
     this.renderRealRecommendations();
     this.renderRealStages();
-
-    // New interactive visualizations
     this.renderNetworkGraph();
     this.renderCharts();
     this.setupTimeSlider();
-    this.setupTabs();
   }
 
   renderRealTimeline() {
     if (!this.container || !this.cascadeData) return;
-    const container = this.container.querySelector('#cascade-timeline');
-    if (!container) return;
+    const tlContainer = this.container.querySelector('#cascade-timeline');
+    if (!tlContainer) return;
 
     const cascades = this.cascadeData.cascades || [];
-
     if (cascades.length === 0) {
-      container.innerHTML = '<p class="empty-state">No cascade propagation detected.</p>';
+      tlContainer.innerHTML = '<p class="empty-state">No cascade propagation detected.</p>';
       return;
     }
 
-    const timelineHTML = cascades.slice(0, 10).map((cascade, index) => {
-      const severity = Math.round(cascade.severity * 100);
+    tlContainer.innerHTML = cascades.slice(0, 10).map((cascade, index) => {
       const color = this.getSeverityColor(cascade.severity);
-
       return `
-        <div class="timeline-item">
+        <div class="timeline-item" style="opacity: 0; transform: translateX(-20px);">
           <div class="timeline-marker" style="background: ${color};">
             <span class="marker-number">${index + 1}</span>
           </div>
           <div class="timeline-content">
             <div class="timeline-system">${this.formatDomainName(cascade.domain)}</div>
             <div class="timeline-details">
-              <span class="timeline-severity">${severity}% severity</span>
-              <span class="timeline-delay">${cascade.impact_time_hours.toFixed(1)}h</span>
+              <span class="timeline-severity" style="color: ${color};">${(cascade.severity * 100).toFixed(0)}% severity</span>
+              <span class="timeline-delay">${cascade.impact_time_hours.toFixed(1)}h delay</span>
             </div>
-            <div class="timeline-cause">from ${this.formatDomainName(cascade.cause)}</div>
+            <div class="timeline-cause">Triggered by ${this.formatDomainName(cascade.cause)}</div>
           </div>
-          ${index < Math.min(cascades.length, 10) - 1 ? '<div class="timeline-arrow">→</div>' : ''}
         </div>
       `;
     }).join('');
 
-    container.innerHTML = timelineHTML;
-
-    // Animate items in
-    gsap.to(container.querySelectorAll('.timeline-item'), {
+    gsap.to(tlContainer.querySelectorAll('.timeline-item'), {
       opacity: 1,
       x: 0,
       duration: 0.5,
-      stagger: 0.1,
+      stagger: 0.08,
       ease: 'power2.out'
     });
   }
 
   renderRealMetrics() {
     if (!this.container || !this.cascadeData) return;
-    const container = this.container.querySelector('#cascade-metrics');
-    if (!container) return;
+    const metricsContainer = this.container.querySelector('#cascade-metrics');
+    if (!metricsContainer) return;
 
     const cascades = this.cascadeData.cascades || [];
-
-    // Group by domain and find max severity
     const domainMap = {};
     cascades.forEach(c => {
       if (!domainMap[c.domain] || domainMap[c.domain].severity < c.severity) {
@@ -458,10 +459,9 @@ export class CascadingFailureViz {
       }
     });
 
-    const metricsHTML = Object.values(domainMap).map(cascade => {
+    metricsContainer.innerHTML = Object.values(domainMap).map(cascade => {
       const severity = Math.round(cascade.severity * 100);
       const color = this.getSeverityColor(cascade.severity);
-
       return `
         <div class="metric-card">
           <div class="metric-header">
@@ -472,649 +472,206 @@ export class CascadingFailureViz {
             <div class="metric-fill" style="width: ${severity}%; background: ${color};"></div>
           </div>
           <div class="metric-info">
-            <span>${cascade.affected_infrastructure.length} components affected</span>
+            <span>${cascade.affected_infrastructure.length} sub-systems affected</span>
           </div>
         </div>
       `;
     }).join('');
-
-    container.innerHTML = metricsHTML || '<p class="empty-state">No metrics available.</p>';
   }
 
   renderRealImpact() {
     if (!this.container || !this.cascadeData) return;
-    const container = this.container.querySelector('#cascade-impact');
-    if (!container) return;
+    const impContainer = this.container.querySelector('#cascade-impact');
+    if (!impContainer) return;
 
-    const impact = this.cascadeData.total_impact;
-
-    const impactHTML = `
+    const impact = this.cascadeData.total_impact || {};
+    impContainer.innerHTML = `
       <div class="impact-stat">
         <div class="impact-icon">🏙️</div>
         <div class="impact-content">
-          <div class="impact-value">${impact.affected_domains}</div>
+          <div class="impact-value">${impact.affected_domains || 0}</div>
           <div class="impact-label">Domains Affected</div>
         </div>
       </div>
       <div class="impact-stat">
         <div class="impact-icon">👥</div>
         <div class="impact-content">
-          <div class="impact-value">${(impact.population_affected / 1000000).toFixed(1)}M</div>
+          <div class="impact-value">${((impact.population_affected || 0) / 1000000).toFixed(1)}M</div>
           <div class="impact-label">People Affected</div>
         </div>
       </div>
       <div class="impact-stat">
         <div class="impact-icon">💰</div>
         <div class="impact-content">
-          <div class="impact-value">$${(impact.estimated_economic_cost / 1000000).toFixed(0)}M</div>
-          <div class="impact-label">Economic Cost</div>
+          <div class="impact-value">$${((impact.estimated_economic_cost || 0) / 1000000).toFixed(1)}M</div>
+          <div class="impact-label">Economic Impact</div>
         </div>
       </div>
       <div class="impact-stat">
         <div class="impact-icon">⏱️</div>
         <div class="impact-content">
-          <div class="impact-value">${impact.recovery_time_hours}h</div>
-          <div class="impact-label">Recovery Time</div>
+          <div class="impact-value">${impact.recovery_time_hours || 0}h</div>
+          <div class="impact-label">Est. Recovery</div>
         </div>
       </div>
     `;
-
-    container.innerHTML = impactHTML;
   }
 
   renderRealRecommendations() {
     if (!this.container || !this.cascadeData) return;
-    const container = this.container.querySelector('#cascade-recommendations');
-    if (!container) return;
+    const recsContainer = this.container.querySelector('#cascade-recommendations');
+    if (!recsContainer) return;
 
     const recommendations = this.cascadeData.recommendations || [];
-
-    const recsHTML = recommendations.map((rec, index) => {
-      // Handle both old format (string) and new format (object)
+    recsContainer.innerHTML = recommendations.map((rec, index) => {
       const isObject = typeof rec === 'object';
-      const priority = isObject ? rec.priority : index + 1;
       const action = isObject ? rec.action : rec;
-      const cost = isObject ? rec.cost_usd : null;
-      const roi = isObject ? rec.cost_effectiveness : null;
-      const timeline = isObject ? rec.implementation_time_hours : null;
-      const urgency = isObject ? rec.urgency : null;
-      const rationale = isObject ? rec.rationale : null;
-
-      const urgencyColor = urgency === 'critical' ? '#ef4444' : urgency === 'high' ? '#f59e0b' : '#10b981';
+      const urgency = isObject ? rec.urgency : 'high';
+      const color = urgency === 'critical' ? '#ef4444' : urgency === 'high' ? '#f59e0b' : '#10b981';
 
       return `
         <div class="recommendation-item">
           <div class="recommendation-header">
-            <div class="recommendation-priority">
-              <span class="priority-badge" style="background: ${urgencyColor};">#${priority}</span>
-              ${urgency ? `<span class="urgency-label" style="color: ${urgencyColor};">${urgency.toUpperCase()}</span>` : ''}
-            </div>
-            ${timeline ? `<div class="recommendation-timeline">⏱️ ${timeline.toFixed(1)}h</div>` : ''}
+            <span class="priority-badge" style="background: ${color};">#${index + 1}</span>
+            <span class="urgency-label" style="color: ${color};">${urgency.toUpperCase()}</span>
           </div>
           <div class="recommendation-text">${action}</div>
-          ${(cost || roi) ? `
-            <div class="recommendation-metrics">
-              ${cost ? `<span class="metric-cost">💰 $${(cost / 1000).toFixed(0)}K</span>` : ''}
-              ${roi ? `<span class="metric-roi">📈 ROI: ${roi.toFixed(1)}x</span>` : ''}
-            </div>
-          ` : ''}
-          ${rationale ? `<div class="recommendation-rationale">💡 ${rationale}</div>` : ''}
+          ${isObject && rec.rationale ? `<div class="recommendation-rationale">💡 ${rec.rationale}</div>` : ''}
         </div>
       `;
     }).join('');
-
-    container.innerHTML = recsHTML || '<p class="empty-state">No recommendations available.</p>';
   }
 
   renderRealStages() {
     if (!this.container || !this.cascadeData) return;
-    const container = this.container.querySelector('#cascade-stages');
-    if (!container) return;
+    const stagesContainer = this.container.querySelector('#cascade-stages');
+    if (!stagesContainer) return;
 
     const cascades = this.cascadeData.cascades || [];
-
-    const stagesHTML = cascades.map((cascade, index) => {
-      const severity = Math.round(cascade.severity * 100);
+    stagesContainer.innerHTML = cascades.map((cascade, index) => {
       const color = this.getSeverityColor(cascade.severity);
-
       return `
-        <div class="stage-card">
+        <div class="stage-card" style="opacity: 0; transform: translateY(10px);">
           <div class="stage-header">
-            <div class="stage-badge" style="background: ${color};">
-              Stage ${index + 1}
-            </div>
+            <div class="stage-badge" style="background: ${color};">Stage ${index + 1}</div>
             <div class="stage-title">${this.formatDomainName(cascade.domain)}</div>
             <div class="stage-time">${cascade.impact_time_hours.toFixed(1)}h</div>
           </div>
           <div class="stage-body">
-            <div class="stage-metrics">
-              <div class="metric-row">
-                <span class="metric-key">Severity:</span>
-                <span class="metric-val" style="color: ${color};">${severity}%</span>
-              </div>
-              <div class="metric-row">
-                <span class="metric-key">Caused by:</span>
-                <span class="metric-val">${this.formatDomainName(cascade.cause)}</span>
-              </div>
-              <div class="metric-row">
-                <span class="metric-key">Dependency:</span>
-                <span class="metric-val">${Math.round(cascade.dependency_strength * 100)}%</span>
-              </div>
-            </div>
-            <div class="stage-infrastructure">
-              <strong>Affected Infrastructure:</strong>
-              <ul>
-                ${cascade.affected_infrastructure.map(i => `<li>${i.replace(/_/g, ' ')}</li>`).join('')}
-              </ul>
-            </div>
+            <p><strong>Severity:</strong> <span style="color: ${color};">${(cascade.severity * 100).toFixed(0)}%</span></p>
+            <p><strong>Affected Systems:</strong> ${cascade.affected_infrastructure.map(i => i.replace(/_/g, ' ')).join(', ')}</p>
           </div>
         </div>
       `;
     }).join('');
 
-    container.innerHTML = stagesHTML || '<p class="empty-state">No cascade stages to display.</p>';
-
-    // Animate stages in
-    gsap.to(container.querySelectorAll('.stage-card'), {
-      opacity: 1,
-      y: 0,
-      duration: 0.5,
-      stagger: 0.1,
-      ease: 'power2.out'
+    gsap.to(stagesContainer.querySelectorAll('.stage-card'), {
+      opacity: 1, y: 0, duration: 0.4, stagger: 0.05, ease: 'power2.out'
     });
+  }
+
+  renderNetworkGraph() {
+    if (!this.container || !this.cascadeData) return;
+    const graphContainer = this.container.querySelector('#network-graph');
+    if (!graphContainer) return;
+
+    graphContainer.innerHTML = '';
+    const width = graphContainer.clientWidth || 800;
+    const height = 500;
+
+    const svg = d3.select(graphContainer).append('svg')
+      .attr('width', width).attr('height', height);
+
+    const nodes = new Map();
+    const trigger = this.cascadeData.trigger || { domain: 'power', severity: 0.8 };
+    nodes.set(trigger.domain, { id: trigger.domain, label: this.formatDomainName(trigger.domain), severity: trigger.severity, type: 'trigger', time: 0 });
+
+    const cascades = this.cascadeData.cascades || [];
+    const links = cascades.map(c => {
+      if (!nodes.has(c.domain)) nodes.set(c.domain, { id: c.domain, label: this.formatDomainName(c.domain), severity: c.severity, type: 'cascade', time: c.impact_time_hours });
+      return { source: c.cause, target: c.domain, strength: c.dependency_strength };
+    }).filter(l => nodes.has(l.source));
+
+    const simulation = d3.forceSimulation(Array.from(nodes.values()))
+      .force('link', d3.forceLink(links).id(d => d.id).distance(120))
+      .force('charge', d3.forceManyBody().strength(-400))
+      .force('center', d3.forceCenter(width / 2, height / 2));
+
+    const link = svg.append('g').selectAll('line').data(links).enter().append('line')
+      .attr('stroke', '#475569').attr('stroke-width', d => d.strength * 4).attr('stroke-opacity', 0.6);
+
+    const node = svg.append('g').selectAll('g').data(Array.from(nodes.values())).enter().append('g')
+      .call(d3.drag().on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+        .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
+        .on('end', (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }));
+
+    node.append('circle').attr('r', d => 15 + d.severity * 20).attr('fill', d => this.getSeverityColor(d.severity)).attr('stroke', '#fff').attr('stroke-width', 2);
+    node.append('text').text(d => d.label).attr('dy', 30).attr('text-anchor', 'middle').attr('fill', '#fff').style('font-size', '12px').style('font-weight', '600');
+
+    simulation.on('tick', () => {
+      link.attr('x1', d => d.source.x).attr('y1', d => d.source.y).attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+      node.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+  }
+
+  renderCharts() {
+    if (!this.container || !this.cascadeData) return;
+    const impact = this.cascadeData.total_impact || {};
+    const timeSeries = impact.severity_time_series || [];
+    const econSeries = impact.economic_cost_time_series || [];
+
+    const times = timeSeries.map(p => p.time_hours);
+    const severities = timeSeries.map(p => p.severity * 100);
+    const costs = econSeries.map(p => p.cost_usd / 1000000);
+
+    const layout = {
+      paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+      font: { color: '#94a3b8', family: 'Inter' },
+      margin: { t: 20, r: 20, b: 40, l: 50 },
+      xaxis: { title: 'Hours', gridcolor: 'rgba(255,255,255,0.05)' },
+      yaxis: { gridcolor: 'rgba(255,255,255,0.05)' }
+    };
+
+    Plotly.newPlot('severity-chart', [{ x: times, y: severities, type: 'scatter', mode: 'lines+markers', line: { color: '#ef4444', width: 3 }, marker: { size: 6 } }], layout);
+    Plotly.newPlot('economic-chart', [{ x: times, y: costs, type: 'scatter', mode: 'lines+markers', line: { color: '#a78bfa', width: 3 }, marker: { size: 6 } }], { ...layout, yaxis: { ...layout.yaxis, title: '$ Millions' } });
+
+    if (this.cascadeData.uncertainty_samples) {
+      const data = this.cascadeData.uncertainty_samples.map(s => ({ x: times, y: s.map(v => v * 100), type: 'scatter', mode: 'lines', line: { color: 'rgba(239, 68, 68, 0.1)', width: 1 }, showlegend: false }));
+      data.push({ x: times, y: severities, type: 'scatter', mode: 'lines', line: { color: '#ef4444', width: 3 }, name: 'Expected Path' });
+      Plotly.newPlot('uncertainty-chart', data, { ...layout, title: 'Monte Carlo Uncertainty Range' });
+    }
+  }
+
+  setupTimeSlider() {
+    const slider = this.container.querySelector('#time-slider');
+    const display = this.container.querySelector('#time-display');
+    if (slider && display) {
+      slider.addEventListener('input', (e) => {
+        const time = parseFloat(e.target.value);
+        display.textContent = `${time}h`;
+        this.updateGraphForTime(time);
+      });
+    }
+  }
+
+  updateGraphForTime(time) {
+    // Dim nodes that hasn't happened yet
+    d3.selectAll('#network-graph circle').style('opacity', d => d.time <= time ? 1 : 0.2);
+    d3.selectAll('#network-graph line').style('opacity', d => d.target.time <= time ? 0.6 : 0.1);
   }
 
   formatDomainName(domain) {
-    return domain.split('_').map(word =>
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
+    if (!domain) return 'System';
+    return domain.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   }
 
-  // Deprecated old methods (kept for backwards compatibility)
-  initializeCascade() { }
-  updateCascadeFromScenario() { }
-  renderCascade() { }
-  renderTimeline() { }
-  renderMetricsImpact() { }
-  renderStages() { }
-  renderSummary() { }
-  animateCascade() { }
-  resetCascade() { }
-
   getSeverityColor(severity) {
-    if (severity < 0.33) return '#10b981';
-    if (severity < 0.66) return '#f59e0b';
+    if (severity < 0.3) return '#10b981';
+    if (severity < 0.6) return '#f59e0b';
     return '#ef4444';
   }
 
-  // ===== NEW INTERACTIVE VISUALIZATION METHODS =====
-
-  /**
-   * Render interactive force-directed network graph using D3.js
-   */
-  renderNetworkGraph() {
-    if (!this.container || !this.cascadeData) return;
-
-    const container = this.container.querySelector('#network-graph');
-    if (!container) return;
-
-    // Clear previous graph
-    container.innerHTML = '';
-    const width = container.clientWidth || 800;
-    const height = 600;
-
-    const svg = d3.select(container)
-      .append('svg')
-      .attr('width', width)
-      .attr('height', height);
-
-    // Build graph from cascade data
-    const nodes = new Map();
-    const links = [];
-
-    // Add trigger node
-    const trigger = this.cascadeData?.trigger;
-    if (!trigger || !trigger.domain) {
-      container.innerHTML = '<p class="empty-state">No cascade data available</p>';
-      return;
-    }
-
-    nodes.set(trigger.domain, {
-      id: trigger.domain,
-      label: this.formatDomainName(trigger.domain),
-      severity: trigger.severity || 0.8,
-      type: 'trigger',
-      time: 0
-    });
-
-    // Add cascade nodes and links
-    const cascades = this.cascadeData?.cascades || [];
-    cascades.forEach(cascade => {
-      if (!nodes.has(cascade.domain)) {
-        nodes.set(cascade.domain, {
-          id: cascade.domain,
-          label: this.formatDomainName(cascade.domain),
-          severity: cascade.severity,
-          type: 'cascade',
-          time: cascade.impact_time_hours
-        });
-      }
-
-      links.push({
-        source: cascade.cause,
-        target: cascade.domain,
-        strength: cascade.dependency_strength,
-        type: cascade.cascade_type || 'direct'
-      });
-    });
-
-    const nodeArray = Array.from(nodes.values());
-    const linkArray = links
-      .filter(link => nodes.has(link.source) && nodes.has(link.target)) // Filter invalid links
-      .map(link => ({
-        ...link,
-        source: nodes.get(link.source),
-        target: nodes.get(link.target)
-      }));
-
-    // Create force simulation
-    const simulation = d3.forceSimulation(nodeArray)
-      .force('link', d3.forceLink(linkArray).id(d => d.id).distance(100))
-      .force('charge', d3.forceManyBody().strength(-300))
-      .force('center', d3.forceCenter(width / 2, height / 2));
-
-    // Draw links
-    const link = svg.append('g')
-      .selectAll('line')
-      .data(linkArray)
-      .enter()
-      .append('line')
-      .attr('stroke', d => {
-        if (d.type === 'feedback_loop') return '#ef4444';
-        if (d.type === 'reverse') return '#f59e0b';
-        return '#94a3b8';
-      })
-      .attr('stroke-width', d => d.strength * 3)
-      .attr('stroke-opacity', 0.6)
-      .attr('marker-end', 'url(#arrowhead)');
-
-    // Arrow marker
-    svg.append('defs').append('marker')
-      .attr('id', 'arrowhead')
-      .attr('viewBox', '-0 -5 10 10')
-      .attr('refX', 25)
-      .attr('refY', 0)
-      .attr('orient', 'auto')
-      .attr('markerWidth', 6)
-      .attr('markerHeight', 6)
-      .append('svg:path')
-      .attr('d', 'M 0,-5 L 10,0 L 0,5')
-      .attr('fill', '#94a3b8');
-
-    // Draw nodes
-    const node = svg.append('g')
-      .selectAll('circle')
-      .data(nodeArray)
-      .enter()
-      .append('circle')
-      .attr('r', d => 15 + d.severity * 20)
-      .attr('fill', d => this.getSeverityColor(d.severity))
-      .attr('stroke', '#fff')
-      .attr('stroke-width', 2)
-      .call(this.drag(simulation))
-      .on('mouseover', function (event, d) {
-        d3.select(this).attr('stroke-width', 4);
-        tooltip.style('display', 'block')
-          .html(`<strong>${d.label}</strong><br>Severity: ${(d.severity * 100).toFixed(0)}%<br>Time: ${d.time.toFixed(1)}h`);
-      })
-      .on('mouseout', function () {
-        d3.select(this).attr('stroke-width', 2);
-        tooltip.style('display', 'none');
-      })
-      .on('mousemove', function (event) {
-        tooltip.style('left', (event.pageX + 10) + 'px')
-          .style('top', (event.pageY - 10) + 'px');
-      });
-
-    // Labels
-    const labels = svg.append('g')
-      .selectAll('text')
-      .data(nodeArray)
-      .enter()
-      .append('text')
-      .text(d => d.label)
-      .attr('font-size', '12px')
-      .attr('dx', 25)
-      .attr('dy', 5)
-      .attr('fill', '#334155');
-
-    // Tooltip
-    const tooltip = d3.select(container)
-      .append('div')
-      .attr('class', 'network-tooltip')
-      .style('display', 'none')
-      .style('position', 'absolute')
-      .style('background', 'rgba(0, 0, 0, 0.8)')
-      .style('color', 'white')
-      .style('padding', '8px')
-      .style('border-radius', '4px')
-      .style('pointer-events', 'none')
-      .style('z-index', '1000');
-
-    // Update positions on simulation tick
-    simulation.on('tick', () => {
-      link
-        .attr('x1', d => d.source.x)
-        .attr('y1', d => d.source.y)
-        .attr('x2', d => d.target.x)
-        .attr('y2', d => d.target.y);
-
-      node
-        .attr('cx', d => d.x)
-        .attr('cy', d => d.y);
-
-      labels
-        .attr('x', d => d.x)
-        .attr('y', d => d.y);
-    });
-
-    this.networkGraph = simulation;
-  }
-
-  drag(simulation) {
-    function dragstarted(event) {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      event.subject.fx = event.subject.x;
-      event.subject.fy = event.subject.y;
-    }
-
-    function dragged(event) {
-      event.subject.fx = event.x;
-      event.subject.fy = event.y;
-    }
-
-    function dragended(event) {
-      if (!event.active) simulation.alphaTarget(0);
-      event.subject.fx = null;
-      event.subject.fy = null;
-    }
-
-    return d3.drag()
-      .on('start', dragstarted)
-      .on('drag', dragged)
-      .on('end', dragended);
-  }
-
-  /**
-   * Render charts using Plotly
-   */
-  renderCharts() {
-    if (!this.container || !this.cascadeData) return;
-
-    const timeline = this.cascadeData.timeline || [];
-    const monteCarlo = this.cascadeData.monte_carlo;
-
-    // Severity over time chart
-    this.renderSeverityChart(timeline);
-
-    // Economic impact chart
-    this.renderEconomicChart(timeline);
-
-    // Monte Carlo uncertainty ranges
-    if (monteCarlo) {
-      this.renderUncertaintyChart(monteCarlo);
-    }
-  }
-
-  renderSeverityChart(timeline) {
-    const container = this.container.querySelector('#severity-chart');
-    if (!container || timeline.length === 0) return;
-
-    const hours = timeline.map(t => t.hour);
-    const totalSeverity = timeline.map(t => t.total_severity);
-    const domains = timeline.map(t => t.affected_domains);
-
-    const trace1 = {
-      x: hours,
-      y: totalSeverity,
-      type: 'scatter',
-      mode: 'lines+markers',
-      name: 'Total Severity',
-      line: { color: '#ef4444', width: 3 }
-    };
-
-    const trace2 = {
-      x: hours,
-      y: domains,
-      type: 'scatter',
-      mode: 'lines+markers',
-      name: 'Affected Domains',
-      yaxis: 'y2',
-      line: { color: '#f59e0b', width: 2 }
-    };
-
-    const layout = {
-      title: 'Cascade Progression Over Time',
-      xaxis: { title: 'Time (hours)' },
-      yaxis: { title: 'Total Severity', side: 'left' },
-      yaxis2: { title: 'Domains Affected', overlaying: 'y', side: 'right' },
-      hovermode: 'x unified',
-      height: 400
-    };
-
-    Plotly.newPlot(container, [trace1, trace2], layout, { responsive: true });
-  }
-
-  renderEconomicChart(timeline) {
-    const container = this.container.querySelector('#economic-chart');
-    if (!container || !this.cascadeData || !this.cascadeData.total_impact) return;
-
-    const economicTimeline = this.cascadeData.total_impact.economic_timeline || [];
-
-    if (economicTimeline.length === 0) {
-      // Fallback if backend doesn't provide it yet
-      const impact = this.cascadeData.total_impact;
-      const duration = timeline.length;
-      const costPerHour = (impact.estimated_economic_cost || 0) / duration;
-      const hours = timeline.map(t => t.hour);
-      const cumulativeCost = hours.map((h, i) => costPerHour * (i + 1) * (1 + h / 24));
-
-      const trace = {
-        x: hours,
-        y: cumulativeCost.map(c => c / 1000000),
-        type: 'scatter',
-        mode: 'lines+markers',
-        name: 'Cumulative Economic Cost (Est)',
-        fill: 'tozeroy',
-        line: { color: '#06b6d4', width: 3 },
-        fillcolor: 'rgba(6, 182, 212, 0.2)'
-      };
-
-      const layout = {
-        title: 'Economic Impact Over Time (Backend Link Pending)',
-        xaxis: { title: 'Time (hours)' },
-        yaxis: { title: 'Cost (Millions USD)' },
-        hovermode: 'x unified',
-        height: 400
-      };
-
-      Plotly.newPlot(container, [trace], layout, { responsive: true });
-      return;
-    }
-
-    const hours = economicTimeline.map(t => t.hour);
-    const cumulativeCost = economicTimeline.map(t => t.cumulative_cost / 1000000); // Millions
-
-    const trace = {
-      x: hours,
-      y: cumulativeCost,
-      type: 'scatter',
-      mode: 'lines+markers',
-      name: 'Cumulative Economic Cost',
-      fill: 'tozeroy',
-      line: { color: '#0891b2', width: 3 },
-      fillcolor: 'rgba(8, 145, 178, 0.2)'
-    };
-
-    const layout = {
-      title: 'Economic Impact Over Time (Real-Time Modeling)',
-      xaxis: { title: 'Time (hours)' },
-      yaxis: { title: 'Cost (Millions USD)' },
-      hovermode: 'x unified',
-      height: 400,
-      margin: { t: 40, b: 40, l: 60, r: 20 }
-    };
-
-    Plotly.newPlot(container, [trace], layout, { responsive: true });
-  }
-
-  renderUncertaintyChart(monteCarlo) {
-    const container = this.container.querySelector('#uncertainty-chart');
-    if (!container || !monteCarlo.statistics) return;
-
-    const stats = monteCarlo.statistics.total_economic_cost;
-    if (!stats) return;
-
-    const trace = {
-      x: ['p5', 'p25', 'Median', 'p75', 'p95'],
-      y: [
-        stats.percentiles.p5 / 1000000,
-        stats.percentiles.p25 / 1000000,
-        stats.median / 1000000,
-        stats.percentiles.p75 / 1000000,
-        stats.percentiles.p95 / 1000000
-      ],
-      type: 'scatter',
-      mode: 'lines+markers',
-      name: 'Economic Cost Distribution',
-      fill: 'tonexty',
-      line: { color: '#a78bfa', width: 2 },
-      fillcolor: 'rgba(167, 139, 250, 0.2)'
-    };
-
-    const layout = {
-      title: 'Uncertainty Ranges (Monte Carlo Simulation)',
-      xaxis: { title: 'Percentile' },
-      yaxis: { title: 'Economic Cost (Millions USD)' },
-      height: 400
-    };
-
-    Plotly.newPlot(container, [trace], layout, { responsive: true });
-  }
-
-  /**
-   * Setup time slider for animation
-   */
-  setupTimeSlider() {
-    if (!this.container || !this.cascadeData) return;
-
-    const slider = this.container.querySelector('#time-slider');
-    const display = this.container.querySelector('#time-display');
-    const playBtn = this.container.querySelector('#play-pause-btn');
-    const resetBtn = this.container.querySelector('#reset-animation');
-
-    if (!slider || !display) return;
-
-    const timeline = this.cascadeData.timeline || [];
-    const maxTime = timeline.length > 0 ? Math.max(...timeline.map(t => t.hour)) : 24;
-
-    slider.max = maxTime;
-    this.currentTime = 0;
-
-    slider.addEventListener('input', (e) => {
-      this.currentTime = parseFloat(e.target.value);
-      display.textContent = `${this.currentTime.toFixed(1)}h`;
-      this.updateNetworkGraphForTime(this.currentTime);
-    });
-
-    if (playBtn) {
-      playBtn.addEventListener('click', () => {
-        if (this.isAnimating) {
-          this.stopAnimation();
-          playBtn.textContent = '▶️ Play';
-        } else {
-          this.startAnimation(maxTime);
-          playBtn.textContent = '⏸️ Pause';
-        }
-      });
-    }
-
-    if (resetBtn) {
-      resetBtn.addEventListener('click', () => {
-        this.stopAnimation();
-        this.currentTime = 0;
-        slider.value = 0;
-        display.textContent = '0h';
-        this.updateNetworkGraphForTime(0);
-        if (playBtn) playBtn.textContent = '▶️ Play';
-      });
-    }
-  }
-
-  startAnimation(maxTime) {
-    this.isAnimating = true;
-    const slider = this.container.querySelector('#time-slider');
-    const display = this.container.querySelector('#time-display');
-
-    this.timeAnimationId = setInterval(() => {
-      this.currentTime += 0.5;
-      if (this.currentTime > maxTime) {
-        this.stopAnimation();
-        return;
-      }
-      if (slider) slider.value = this.currentTime;
-      if (display) display.textContent = `${this.currentTime.toFixed(1)}h`;
-      this.updateNetworkGraphForTime(this.currentTime);
-    }, 500); // Update every 500ms
-  }
-
-  stopAnimation() {
-    this.isAnimating = false;
-    if (this.timeAnimationId) {
-      clearInterval(this.timeAnimationId);
-      this.timeAnimationId = null;
-    }
-  }
-
-  updateNetworkGraphForTime(time) {
-    // Update node colors/sizes based on time
-    // This would require storing time-based severity data
-    // Simplified implementation
-    if (this.networkGraph && this.cascadeData) {
-      const cascades = this.cascadeData.cascades || [];
-      // Would update node visualizations based on current time
-    }
-  }
-
-  /**
-   * Setup tab navigation
-   */
-  setupTabs() {
-    if (!this.container) return;
-
-    const tabs = this.container.querySelectorAll('.tab-btn');
-    const contents = this.container.querySelectorAll('.tab-content');
-
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        const tabId = tab.dataset.tab;
-
-        // Remove active class from all tabs and contents
-        tabs.forEach(t => t.classList.remove('active'));
-        contents.forEach(c => c.classList.remove('active'));
-
-        // Add active class to clicked tab and corresponding content
-        tab.classList.add('active');
-        const content = this.container.querySelector(`#tab-${tabId}`);
-        if (content) content.classList.add('active');
-      });
-    });
-  }
-
   cleanup() {
-    this.stopAnimation();
-    if (this.networkGraph) {
-      this.networkGraph.stop();
-    }
+    if (this.timeAnimationId) clearInterval(this.timeAnimationId);
   }
 }

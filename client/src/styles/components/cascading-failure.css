@@ -52,7 +52,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Tab Navigation */
@@ -101,8 +103,15 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .cascade-content {
@@ -176,8 +185,6 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  opacity: 0;
-  transform: translateX(-20px);
 }
 
 .timeline-marker {
@@ -303,8 +310,6 @@
   border: 1px solid rgba(167, 139, 250, 0.1);
   border-radius: 1rem;
   padding: 1.5rem;
-  opacity: 0;
-  transform: translateY(20px);
 }
 
 .stage-header {
@@ -494,13 +499,18 @@
   background: linear-gradient(135deg, rgba(30, 30, 60, 0.4) 0%, rgba(15, 15, 35, 0.4) 100%);
 }
 
-.recommendation-number {
+.recommendation-priority {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.priority-badge {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
   border-radius: 50%;
   color: white;
   font-weight: 700;
@@ -515,68 +525,11 @@
   line-height: 1.5;
 }
 
-.cascade-summary {
-  background: linear-gradient(135deg, rgba(30, 30, 60, 0.3) 0%, rgba(15, 15, 35, 0.3) 100%);
-  border: 1px solid rgba(167, 139, 250, 0.1);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.cascade-summary h3 {
-  margin: 0 0 1.5rem 0;
-  font-size: 1.1rem;
-  color: #e2e8f0;
-  font-weight: 600;
-}
-
-.summary-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 1rem;
-}
-
-.summary-stat {
-  background: rgba(167, 139, 250, 0.05);
-  border: 1px solid rgba(167, 139, 250, 0.1);
-  border-radius: 0.75rem;
-  padding: 1rem;
-  text-align: center;
-}
-
-.summary-label {
-  font-size: 0.8rem;
+.recommendation-rationale {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
   color: #94a3b8;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
-}
-
-.summary-value {
-  font-size: 1.8rem;
-  color: #a78bfa;
-  font-weight: 700;
-}
-
-.summary-description {
-  background: rgba(167, 139, 250, 0.05);
-  border-left: 3px solid #a78bfa;
-  border-radius: 0.5rem;
-  padding: 1rem;
-}
-
-.summary-description p {
-  margin: 0;
-  font-size: 0.95rem;
-  color: #cbd5e1;
-  line-height: 1.6;
+  font-style: italic;
 }
 
 /* Control Panel */
@@ -657,12 +610,141 @@
   box-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
 }
 
-/* Controls */
-.cascade-controls {
+/* Network Graph */
+.network-graph-container {
+  background: linear-gradient(135deg, rgba(30, 30, 60, 0.3) 0%, rgba(15, 15, 35, 0.3) 100%);
+  border: 1px solid rgba(167, 139, 250, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.network-graph {
+  width: 100%;
+  height: 500px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.graph-controls {
   display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: rgba(167, 139, 250, 0.05);
+  border-radius: 0.5rem;
+}
+
+.slider-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
   gap: 1rem;
+}
+
+/* Charts */
+.charts-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.chart-section {
+  background: linear-gradient(135deg, rgba(30, 30, 60, 0.3) 0%, rgba(15, 15, 35, 0.3) 100%);
+  border: 1px solid rgba(167, 139, 250, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.chart-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: #e2e8f0;
+}
+
+.plotly-chart {
+  width: 100%;
+  height: 350px;
+}
+
+/* Comparison */
+.comparison-container {
+  padding: 1rem;
+}
+
+.comparison-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.comparison-card {
+  background: linear-gradient(135deg, rgba(30, 30, 60, 0.4) 0%, rgba(15, 15, 35, 0.4) 100%);
+  border: 1px solid rgba(167, 139, 250, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  position: relative;
+}
+
+.comparison-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.comparison-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: #e2e8f0;
+}
+
+.remove-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  font-size: 1.2rem;
+}
+
+.comparison-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #a78bfa;
 }
 
 .cascade-btn {
@@ -698,52 +780,15 @@
   background: rgba(167, 139, 250, 0.05);
 }
 
-@media (max-width: 1024px) {
-  .cascade-container {
-    grid-template-columns: 1fr;
-  }
-
-  .cascade-stages {
-    grid-template-columns: 1fr;
-  }
+.cascade-btn.small {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
 }
 
-@media (max-width: 768px) {
-  .cascading-failure {
-    padding: 1.5rem;
-  }
+@media (max-width: 1024px) {
 
-  .cascade-header h2 {
-    font-size: 1.5rem;
-  }
-
-  .cascade-container {
-    gap: 1.5rem;
-  }
-
-  .cascade-progression,
-  .cascade-metrics {
-    padding: 1rem;
-  }
-
-  .stage-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .stage-title {
-    flex: none;
-  }
-
-  .cascade-controls {
-    flex-direction: column;
-  }
-
-  .cascade-btn {
-    width: 100%;
-  }
-
-  .summary-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .cascade-container,
+  .charts-container {
+    grid-template-columns: 1fr;
   }
 }

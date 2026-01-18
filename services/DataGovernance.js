@@ -1,6 +1,9 @@
 /**
  * Data Governance Layer - In-Memory Mock (Fix for Node 25 compatibility)
  * Manages metadata, lineage, versioning for production-scale data operations
+ * 
+ * NOTE: This version uses in-memory storage instead of better-sqlite3 to ensure
+ * compatibility with Node.js 25.x in development environments.
  */
 
 import { fileURLToPath } from 'url';
@@ -12,7 +15,7 @@ const __dirname = dirname(__filename);
 export class DataGovernance {
   constructor(dbPath = null) {
     console.log('[DataGovernance] Initializing IN-MEMORY mode (better-sqlite3 disabled)');
-    
+
     // In-memory stores
     this.metadata = [];
     this.lineage = [];
@@ -30,10 +33,10 @@ export class DataGovernance {
    */
   registerMetadata(entityType, entityId, cityId, domain, metadata) {
     // Upsert logic
-    const index = this.metadata.findIndex(m => 
-      m.entity_type === entityType && 
-      m.entity_id === entityId && 
-      m.city_id === cityId && 
+    const index = this.metadata.findIndex(m =>
+      m.entity_type === entityType &&
+      m.entity_id === entityId &&
+      m.city_id === cityId &&
       m.domain === domain
     );
 
@@ -80,12 +83,12 @@ export class DataGovernance {
    */
   createVersion(entityType, entityId, cityId, snapshotData) {
     // Find max version
-    const entityVersions = this.versions.filter(v => 
-      v.entity_type === entityType && 
-      v.entity_id === entityId && 
+    const entityVersions = this.versions.filter(v =>
+      v.entity_type === entityType &&
+      v.entity_id === entityId &&
       v.city_id === cityId
     );
-    
+
     const maxVersion = entityVersions.reduce((max, v) => Math.max(max, v.version), 0);
     const nextVersion = maxVersion + 1;
 
@@ -110,8 +113,8 @@ export class DataGovernance {
   /**
    * Register cross-domain causal link
    */
-  registerCrossDomainLink(sourceDomain, sourceMetric, targetDomain, targetMetric, 
-                          lagHours, correlation, causalConfidence, domainLogic) {
+  registerCrossDomainLink(sourceDomain, sourceMetric, targetDomain, targetMetric,
+    lagHours, correlation, causalConfidence, domainLogic) {
     this.crossDomainLinks.push({
       id: this.crossDomainLinks.length + 1,
       source_domain: sourceDomain,
@@ -133,7 +136,7 @@ export class DataGovernance {
   calculateSystemicResilience(cityId, urbanScore, healthScore, agricultureScore) {
     // Cross-domain risk assessment
     const crossDomainRisk = this.assessCrossDomainRisk(cityId);
-    
+
     // Weighted systemic resilience (not just sum of parts)
     const systemicResilience = (
       urbanScore * 0.35 +
@@ -167,11 +170,8 @@ export class DataGovernance {
    * Assess cross-domain risk based on causal links
    */
   assessCrossDomainRisk(cityId) {
-    // Logic: Average of (confidence * (1 - abs(correlation))) for validated links
-    // Note: cityId isn't used in the original SQL query for this method either (it aggregates all links)
-    
     const validatedLinks = this.crossDomainLinks.filter(l => l.validation_status === 'validated');
-    
+
     if (validatedLinks.length === 0) return 0;
 
     const totalRisk = validatedLinks.reduce((sum, link) => {
@@ -205,15 +205,11 @@ export class DataGovernance {
   getSystemicResilience(cityId, hours = 24) {
     // Filter by city
     let metrics = this.resilienceMetrics.filter(m => m.city_id === cityId);
-    
+
     // Sort by timestamp DESC
     metrics.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
-    // Limit (mock implementation ignores 'hours' logic exact match, just takes recent if needed, or returns all filtered)
-    // The original SQL used LIMIT ?, passing 'hours' which is weird (usually LIMIT is count). 
-    // Assuming 'hours' in SQL context was meant to be count or time range? 
-    // SQL: LIMIT ? -> if hours=24, it returns 24 rows?
-    // Let's assume it returns 'hours' number of records.
+
+    // Limit to requested records
     return metrics.slice(0, hours);
   }
 
@@ -227,36 +223,18 @@ export class DataGovernance {
       return this.lineage.filter(l => l.target_entity_type === entityType && l.target_entity_id === entityId);
     }
   }
-  
-  // Helper to validate links for the mock (since we don't have the SQL update)
-  validateLinkInternal(sqlPredicate) {
-      // Mock validation logic mimicking: UPDATE ... SET validation_status='validated' WHERE causal_confidence >= 0.65
-      this.crossDomainLinks.forEach(link => {
-          if (link.causal_confidence >= 0.65) {
-              link.validation_status = 'validated';
-          }
-      });
-  }
-  
-  // Custom method to support the direct execution of DB statements if any other code uses .db property
+
+  // Custom mock for DB property to support legacy code that might access it
   get db() {
-      return {
-          prepare: (sql) => {
-              // Very basic mock for prepare statements used in validation
-              if (sql.includes('UPDATE cross_domain_links')) {
-                  return {
-                      run: () => this.validateLinkInternal()
-                  };
-              }
-              return {
-                  run: () => {},
-                  get: () => ({}),
-                  all: () => []
-              };
-          },
-          exec: () => {},
-          close: () => {}
-      };
+    return {
+      prepare: (sql) => ({
+        run: () => { },
+        get: () => ({}),
+        all: () => []
+      }),
+      exec: () => { },
+      close: () => { }
+    };
   }
 
   calculateChecksum(data) {

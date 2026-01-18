@@ -1,4 +1,6 @@
 import { ScenarioChat } from '../components/ScenarioChat.js';
+import { LoginModal } from '../components/LoginModal.js';
+import { PortalType } from '../utils/auth.js';
 import gsap from 'gsap';
 import '../styles/pages/home.css';
 
@@ -29,6 +31,34 @@ export class HomePage {
           </div>
         </div>
 
+        <!-- Portal Selector Section -->
+        <section class="portal-section">
+          <div class="container">
+            <h2 class="section-title">Access Your Portal</h2>
+            <p class="section-subtitle">Login to access specialized dashboards</p>
+            <div class="portal-grid">
+              <div class="portal-card glass" data-portal="hospital">
+                <span class="portal-icon">🏥</span>
+                <h3>Hospital Portal</h3>
+                <p>Healthcare capacity monitoring and patient surge predictions</p>
+                <button class="btn btn-portal btn-hospital" id="login-hospital">Login with Medical License</button>
+              </div>
+              <div class="portal-card glass" data-portal="government">
+                <span class="portal-icon">🏛️</span>
+                <h3>Government Portal</h3>
+                <p>City-wide risk overview and policy simulation tools</p>
+                <button class="btn btn-portal btn-government" id="login-government">Login with Government ID</button>
+              </div>
+              <div class="portal-card glass" data-portal="user">
+                <span class="portal-icon">👤</span>
+                <h3>Citizen Portal</h3>
+                <p>Personal safety alerts and local air quality information</p>
+                <button class="btn btn-portal btn-user" id="login-user">Login as Citizen</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div class="chat-container"></div>
 
         <section class="vision-section">
@@ -57,8 +87,44 @@ export class HomePage {
     this.chat = new ScenarioChat();
     this.chat.render(chatContainer);
 
+    // Setup portal login buttons
+    this.setupPortalButtons(container);
+
     // Animate vision cards on scroll
     this.animateOnScroll();
+  }
+
+  setupPortalButtons(container) {
+    const hospitalBtn = container.querySelector('#login-hospital');
+    const governmentBtn = container.querySelector('#login-government');
+    const userBtn = container.querySelector('#login-user');
+
+    if (hospitalBtn) {
+      hospitalBtn.addEventListener('click', () => {
+        const modal = new LoginModal(PortalType.HOSPITAL, () => {
+          window.location.href = '/hospital';
+        });
+        modal.render();
+      });
+    }
+
+    if (governmentBtn) {
+      governmentBtn.addEventListener('click', () => {
+        const modal = new LoginModal(PortalType.GOVERNMENT, () => {
+          window.location.href = '/gov';
+        });
+        modal.render();
+      });
+    }
+
+    if (userBtn) {
+      userBtn.addEventListener('click', () => {
+        const modal = new LoginModal(PortalType.USER, () => {
+          window.location.href = '/user';
+        });
+        modal.render();
+      });
+    }
   }
 
   animateOnScroll() {

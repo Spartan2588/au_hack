@@ -8,6 +8,9 @@ import { AboutPage } from '../pages/About.js';
 import { TrendsPage } from '../pages/Trends.js';
 import { MapPage } from '../pages/Map.js';
 import { CascadePage } from '../pages/Cascade.js';
+import { GovDashboardPage } from '../pages/GovDashboard.js';
+import { HospitalDashboardPage } from '../pages/HospitalDashboard.js';
+import { UserPortalPage } from '../pages/UserPortal.js';
 
 export class Router {
   constructor() {
@@ -20,7 +23,10 @@ export class Router {
       '/about': AboutPage,
       '/trends': TrendsPage,
       '/map': MapPage,
-      '/cascade': CascadePage
+      '/cascade': CascadePage,
+      '/gov': GovDashboardPage,
+      '/hospital': HospitalDashboardPage,
+      '/user': UserPortalPage
     };
   }
 
@@ -46,7 +52,7 @@ export class Router {
 
   async navigate(path) {
     const PageClass = this.pages[path] || this.pages['/'];
-    
+
     // Trigger transition
     PageTransition.start();
 
@@ -67,7 +73,7 @@ export class Router {
     // Render new page
     const pageContent = getPageContent();
     pageContent.innerHTML = '';
-    
+
     this.currentPage = new PageClass();
     this.currentPage.render(pageContent);
 
