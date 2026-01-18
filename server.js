@@ -3,8 +3,9 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import fetch from 'node-fetch';
 import { RealTimeDataService } from './services/RealTimeDataService.js';
-import { CrossDomainIntegration } from './services/CrossDomainIntegration.js';
-import { ProductionScalability } from './services/ProductionScalability.js';
+// Commented out - requires better-sqlite3
+// import { CrossDomainIntegration } from './services/CrossDomainIntegration.js';
+// import { ProductionScalability } from './services/ProductionScalability.js';
 import './load-env.js'; // Load .env.local if it exists
 
 // Make fetch available globally
@@ -461,7 +462,7 @@ class CascadeAnalytics {
     const aqiFactor = Math.min(1.5, 1 + (currentState.aqi / 500) * 0.5);
     const tempFactor = Math.min(1.3, 1 + ((currentState.temperature - 25) / 25) * 0.3);
     const hospitalFactor = Math.min(1.4, 1 + (currentState.hospital_load / 100) * 0.4);
-    
+
     // Adjust initial severity based on real-time conditions
     const adjustedSeverity = Math.min(1.0, severity * aqiFactor * tempFactor * hospitalFactor);
     console.log(`[CASCADE] Real-time factors - AQI: ${aqiFactor.toFixed(2)}, Temp: ${tempFactor.toFixed(2)}, Hospital: ${hospitalFactor.toFixed(2)}`);
@@ -770,8 +771,9 @@ class CascadeAnalytics {
 // ============================================================================
 
 const dataStore = new DataStore();
-const crossDomainIntegration = new CrossDomainIntegration();
-const scalability = new ProductionScalability();
+// Commented out - requires better-sqlite3
+// const crossDomainIntegration = new CrossDomainIntegration();
+// const scalability = new ProductionScalability();
 
 /**
  * GET /api/v1/current-state?city_id={city}
