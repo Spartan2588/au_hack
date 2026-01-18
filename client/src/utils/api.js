@@ -3,6 +3,17 @@ export class ApiClient {
     this.baseUrl = baseUrl;
   }
 
+  async getCities() {
+    try {
+      const response = await fetch(`${this.baseUrl}/cities`);
+      if (!response.ok) throw new Error('Failed to fetch cities');
+      return await response.json();
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  }
+
   async getCurrentState(cityId = 1) {
     try {
       const response = await fetch(`${this.baseUrl}/current-state?city_id=${cityId}`);

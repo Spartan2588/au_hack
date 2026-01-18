@@ -43,10 +43,10 @@ class DataStore {
       // Generate 24 hours of historical data
       for (let i = 24; i >= 0; i--) {
         const timestamp = new Date(now - i * 3600000).toISOString();
-        
+
         // Realistic patterns per city
         const cityFactor = cityId === 1 ? 1.2 : cityId === 2 ? 1.1 : 0.9;
-        
+
         data[cityId].aqi.push({
           timestamp,
           value: Math.max(50, Math.min(500, 150 + Math.sin(i / 5) * 100 + Math.random() * 50) * cityFactor)
@@ -160,9 +160,9 @@ class RiskAnalytics {
   static calculateEnvironmentalRisk(aqi, temperature) {
     const aqiNorm = Math.min(aqi / 500, 1);
     const tempNorm = Math.max(0, Math.min((temperature - 20) / 30, 1));
-    
+
     const envScore = aqiNorm * 0.6 + tempNorm * 0.4;
-    
+
     let level;
     if (envScore < 0.33) level = 'low';
     else if (envScore < 0.66) level = 'medium';
@@ -181,9 +181,9 @@ class RiskAnalytics {
   static calculateHealthRisk(hospitalLoad, temperature) {
     const hospitalNorm = hospitalLoad / 100;
     const tempNorm = Math.max(0, Math.min((temperature - 20) / 30, 1));
-    
+
     const healthScore = hospitalNorm * 0.7 + tempNorm * 0.3;
-    
+
     let level;
     if (healthScore < 0.33) level = 'low';
     else if (healthScore < 0.66) level = 'medium';
@@ -202,9 +202,9 @@ class RiskAnalytics {
   static calculateFoodSecurityRisk(cropSupply, foodPriceIndex) {
     const cropNorm = 1 - (cropSupply / 100); // Low supply = high risk
     const priceNorm = Math.max(0, Math.min((foodPriceIndex - 100) / 50, 1)); // 100-150 range
-    
+
     const foodScore = cropNorm * 0.6 + priceNorm * 0.4;
-    
+
     let level;
     if (foodScore < 0.33) level = 'low';
     else if (foodScore < 0.66) level = 'medium';
@@ -229,7 +229,7 @@ class RiskAnalytics {
 
     // Apply intervention (reduce by 20-30%)
     const interventionFactor = 0.75; // 25% reduction
-    
+
     const intervention = {
       environmental_risk: this.calculateEnvironmentalRisk(
         params.aqi * interventionFactor,
@@ -316,15 +316,52 @@ const dataStore = new DataStore();
 
 /**
  * GET /api/v1/current-state?city_id={city}
- * Returns current metrics for a city
+ * Returns current metrics for a city with real-time weather data
  */
-app.get('/api/v1/current-state', (req, res) => {
+app.get('/api/v1/current-state', async (req, res) => {
   const cityId = parseInt(req.query.city_id) || 1;
-  
+
   if (!dataStore.cities[cityId]) {
     return res.status(400).json({ error: 'Invalid city_id' });
   }
 
+  const city = dataStore.cities[cityId];
+  const apiKey = process.env.OPENWEATHER_API_KEY;
+
+  // Try to get real-time data from OpenWeatherMap
+  if (apiKey) {
+    try {
+      // Fetch both AQI and Weather in parallel
+      const [aqiData, weatherData] = await Promise.all([
+        fetchOpenWeatherMapAQI(city.lat, city.lng, apiKey),
+        fetchOpenWeatherMapWeather(city.lat, city.lng, apiKey)
+      ]);
+
+      console.log(`✅ Real-time data for ${city.name}: AQI=${aqiData.aqi}, Temp=${weatherData.temperature}°C`);
+
+      // Combine with simulated data for hospital/crop (not available from weather API)
+      const simulatedState = dataStore.getCurrentState(cityId);
+
+      return res.json({
+        city: city.name,
+        timestamp: new Date().toISOString(),
+        aqi: aqiData.aqi,
+        temperature: weatherData.temperature,
+        humidity: weatherData.humidity,
+        weather_description: weatherData.description,
+        hospital_load: simulatedState.hospital_load,
+        crop_supply: simulatedState.crop_supply,
+        food_price_index: simulatedState.food_price_index,
+        traffic_density: simulatedState.traffic_density,
+        source: 'OpenWeatherMap',
+        pollutants: aqiData.pollutants
+      });
+    } catch (error) {
+      console.error(`⚠️ API error for ${city.name}, using fallback:`, error.message);
+    }
+  }
+
+  // Fallback to simulated data
   const state = dataStore.getCurrentState(cityId);
   res.json(state);
 });
@@ -335,7 +372,7 @@ app.get('/api/v1/current-state', (req, res) => {
  */
 app.get('/api/v1/risk-assessment', (req, res) => {
   const cityId = parseInt(req.query.city_id) || 1;
-  
+
   if (!dataStore.cities[cityId]) {
     return res.status(400).json({ error: 'Invalid city_id' });
   }
@@ -361,7 +398,7 @@ app.post('/api/v1/scenario', (req, res) => {
 
   // Validate inputs
   if (typeof aqi !== 'number' || typeof hospital_load !== 'number' ||
-      typeof crop_supply !== 'number' || typeof temperature !== 'number') {
+    typeof crop_supply !== 'number' || typeof temperature !== 'number') {
     return res.status(400).json({ error: 'Invalid parameters' });
   }
 
@@ -409,8 +446,7 @@ app.get('/api/v1/health', (req, res) => {
 
 /**
  * GET /api/v1/aqi?lat={lat}&lng={lng}
- * Fetches real-time AQI data from external APIs
- * Proxies requests to avoid CORS issues and protect API keys
+ * Fetches real-time AQI data from OpenWeatherMap API
  */
 app.get('/api/v1/aqi', async (req, res) => {
   const { lat, lng } = req.query;
@@ -420,25 +456,35 @@ app.get('/api/v1/aqi', async (req, res) => {
   }
 
   try {
-    // Generate realistic AQI data based on location and time
-    const aqiData = generateRealisticAQI(parseFloat(lat), parseFloat(lng));
-    console.log('✅ Returning realistic AQI data:', aqiData.aqi);
+    const apiKey = process.env.OPENWEATHER_API_KEY;
+
+    if (!apiKey) {
+      console.log('⚠️ No API key found, using simulated data');
+      const aqiData = generateRealisticAQI(parseFloat(lat), parseFloat(lng));
+      return res.json(aqiData);
+    }
+
+    // Fetch real AQI data from OpenWeatherMap
+    const aqiData = await fetchOpenWeatherMapAQI(parseFloat(lat), parseFloat(lng), apiKey);
+    console.log('✅ Real AQI data from OpenWeatherMap:', aqiData.aqi);
     res.json(aqiData);
   } catch (error) {
-    console.error('❌ AQI endpoint error:', error);
-    res.status(500).json({ error: 'Failed to fetch AQI data' });
+    console.error('❌ AQI API error, falling back to simulated:', error.message);
+    // Fallback to simulated data
+    const aqiData = generateRealisticAQI(parseFloat(lat), parseFloat(lng));
+    res.json(aqiData);
   }
 });
 
 /**
- * Fetch AQI from OpenWeatherMap API
- * Free tier: 60 calls/min, includes AQI data
- * Sign up: https://openweathermap.org/api/air-pollution
+ * Fetch AQI from OpenWeatherMap Air Pollution API
+ * Free tier: 1000 calls/day
+ * Docs: https://openweathermap.org/api/air-pollution
  */
 async function fetchOpenWeatherMapAQI(lat, lng, apiKey) {
-  const url = `https://api.openweathermap.org/data/2.5/air_quality?lat=${lat}&lon=${lng}&appid=${apiKey}`;
-  console.log('🌐 OpenWeatherMap URL:', url);
-  
+  const url = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lng}&appid=${apiKey}`;
+  console.log('🌐 OpenWeatherMap AQI URL:', url);
+
   const response = await fetch(url);
   console.log('📊 OpenWeatherMap Response Status:', response.status);
 
@@ -449,12 +495,26 @@ async function fetchOpenWeatherMapAQI(lat, lng, apiKey) {
   }
 
   const data = await response.json();
-  console.log('📦 OpenWeatherMap Data:', JSON.stringify(data).substring(0, 200));
-  
-  // OpenWeatherMap returns aqi on 1-5 scale
+  console.log('📦 OpenWeatherMap AQI Data received');
+
+  // OpenWeatherMap returns aqi on 1-5 scale, convert to US EPA scale (0-500)
   if (data.list && data.list[0] && data.list[0].main && data.list[0].main.aqi) {
-    const aqi = data.list[0].main.aqi; // 1-5 scale
-    const aqiValue = aqi * 100; // Convert to 0-500 scale (rough)
+    const aqiLevel = data.list[0].main.aqi; // 1-5 scale
+    const components = data.list[0].components;
+
+    // Calculate US EPA AQI from PM2.5 concentration
+    const pm25 = components?.pm2_5 || 0;
+    let aqiValue;
+
+    // EPA AQI breakpoints for PM2.5
+    if (pm25 <= 12) aqiValue = Math.round((50 / 12) * pm25);
+    else if (pm25 <= 35.4) aqiValue = Math.round(50 + (50 / 23.4) * (pm25 - 12));
+    else if (pm25 <= 55.4) aqiValue = Math.round(100 + (50 / 20) * (pm25 - 35.4));
+    else if (pm25 <= 150.4) aqiValue = Math.round(150 + (50 / 95) * (pm25 - 55.4));
+    else if (pm25 <= 250.4) aqiValue = Math.round(200 + (100 / 100) * (pm25 - 150.4));
+    else aqiValue = Math.round(300 + (100 / 149.6) * (pm25 - 250.4));
+
+    aqiValue = Math.min(500, Math.max(0, aqiValue));
 
     return {
       aqi: aqiValue,
@@ -462,17 +522,39 @@ async function fetchOpenWeatherMapAQI(lat, lng, apiKey) {
       coordinates: { lat: parseFloat(lat), lng: parseFloat(lng) },
       timestamp: new Date().toISOString(),
       pollutants: {
-        pm25: data.list[0].components?.pm2_5 || null,
-        pm10: data.list[0].components?.pm10 || null,
-        o3: data.list[0].components?.o3 || null,
-        no2: data.list[0].components?.no2 || null,
-        so2: data.list[0].components?.so2 || null,
-        co: data.list[0].components?.co || null
+        pm25: components?.pm2_5 || null,
+        pm10: components?.pm10 || null,
+        o3: components?.o3 || null,
+        no2: components?.no2 || null,
+        so2: components?.so2 || null,
+        co: components?.co || null
       }
     };
   }
 
   throw new Error('Invalid OpenWeatherMap response format');
+}
+
+/**
+ * Fetch current weather from OpenWeatherMap Weather API
+ */
+async function fetchOpenWeatherMapWeather(lat, lng, apiKey) {
+  const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${apiKey}&units=metric`;
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Weather API failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  return {
+    temperature: Math.round(data.main.temp * 10) / 10,
+    humidity: data.main.humidity,
+    pressure: data.main.pressure,
+    description: data.weather[0]?.description || 'Unknown',
+    wind_speed: data.wind?.speed || 0
+  };
 }
 
 /**
@@ -483,7 +565,7 @@ async function fetchOpenWeatherMapAQI(lat, lng, apiKey) {
 async function fetchIQAirAQI(lat, lng) {
   const url = `https://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lng}&key=demo`;
   console.log('🌐 IQAir URL:', url);
-  
+
   const response = await fetch(url);
   console.log('📊 IQAir Response Status:', response.status);
 
@@ -500,7 +582,7 @@ async function fetchIQAirAQI(lat, lng) {
     const current = data.data.current.pollution;
     const aqiValue = current.aqius || 100;
     console.log('✅ IQAir AQI Value:', aqiValue);
-    
+
     return {
       aqi: aqiValue,
       source: 'IQAir',
@@ -557,7 +639,7 @@ async function fetchWAQIAQI(lat, lng, apiKey) {
 function generateRealisticAQI(lat, lng) {
   // Determine area type based on coordinates (Mumbai specific)
   let baseAqi;
-  
+
   // Industrial/traffic areas have higher AQI
   if (lat > 19.05 && lat < 19.15 && lng > 72.85 && lng < 72.95) {
     // Central Mumbai - high traffic

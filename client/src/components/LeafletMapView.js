@@ -3,20 +3,51 @@ import '../styles/components/leaflet-map.css';
 
 /**
  * Leaflet Map View Component
- * Interactive map for Mumbai with AQI display on click
- * Extends existing map functionality without modifying MapView.js core
+ * Interactive map with AQI display on click
+ * Supports Mumbai, Delhi, and Bangalore
  */
 export class LeafletMapView {
-    constructor() {
+    constructor(city = { name: 'Mumbai', lat: 19.0760, lng: 72.8777 }) {
         this.map = null;
         this.aqiService = new AqiService();
         this.currentMarker = null;
         this.currentPopup = null;
         this.isLoading = false;
+        this.cityBoundary = null;
 
-        // Mumbai center coordinates
-        this.mumbaiCenter = [19.0760, 72.8777];
+        // Current city
+        this.currentCity = city;
+        this.cityCenter = [city.lat, city.lng];
         this.defaultZoom = 11;
+    }
+
+    /**
+     * Change the city displayed on the map
+     */
+    setCity(city) {
+        this.currentCity = city;
+        this.cityCenter = [city.lat, city.lng];
+
+        if (this.map) {
+            // Clear existing markers
+            this.clearMarkers();
+
+            // Remove old boundary
+            if (this.cityBoundary) {
+                this.map.removeLayer(this.cityBoundary);
+            }
+
+            // Pan to new city
+            this.map.setView(this.cityCenter, this.defaultZoom, {
+                animate: true,
+                duration: 1
+            });
+
+            // Add new boundary
+            this.addCityBoundary();
+
+            console.log(`Map switched to ${city.name}`);
+        }
     }
 
     async render(container) {
@@ -115,16 +146,16 @@ export class LeafletMapView {
         try {
             // Get Leaflet reference
             const L = typeof window !== 'undefined' && window.L ? window.L : (typeof L !== 'undefined' ? L : null);
-            
+
             if (!L) {
                 throw new Error('Leaflet not available');
             }
 
             console.log('Initializing map with Leaflet version:', L.version || 'unknown');
 
-            // Create map centered on Mumbai
+            // Create map centered on selected city
             this.map = L.map('leaflet-map', {
-                center: this.mumbaiCenter,
+                center: this.cityCenter,
                 zoom: this.defaultZoom,
                 zoomControl: true,
                 scrollWheelZoom: true,
@@ -163,8 +194,8 @@ export class LeafletMapView {
                 this.handleMapClick(e);
             });
 
-            // Add Mumbai boundary indicator
-            this.addMumbaiBoundary();
+            // Add city boundary indicator
+            this.addCityBoundary();
 
             console.log('Map initialized successfully');
         } catch (error) {
@@ -180,13 +211,13 @@ export class LeafletMapView {
         }
     }
 
-    addMumbaiBoundary() {
+    addCityBoundary() {
         try {
             const L = typeof window !== 'undefined' && window.L ? window.L : (typeof L !== 'undefined' ? L : null);
             if (!L || !this.map) return;
 
-            // Approximate Mumbai metropolitan area
-            const mumbaiPolygon = L.circle(this.mumbaiCenter, {
+            // City boundary circle
+            this.cityBoundary = L.circle(this.cityCenter, {
                 radius: 25000, // 25km radius
                 color: 'rgba(167, 139, 250, 0.3)',
                 fillColor: 'rgba(167, 139, 250, 0.1)',
@@ -195,9 +226,9 @@ export class LeafletMapView {
                 dashArray: '5, 5'
             });
 
-            mumbaiPolygon.addTo(this.map);
+            this.cityBoundary.addTo(this.map);
         } catch (error) {
-            console.warn('Could not add Mumbai boundary:', error);
+            console.warn('Could not add city boundary:', error);
         }
     }
 
