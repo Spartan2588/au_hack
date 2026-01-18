@@ -1,4 +1,4 @@
-import { Auth, PortalType } from '../utils/auth.js';
+import { authService } from '../utils/auth.js';
 import { LoginModal } from '../components/LoginModal.js';
 import { ApiClient } from '../utils/api.js';
 import gsap from 'gsap';
@@ -20,19 +20,19 @@ export class HospitalDashboardPage {
 
     async render(container) {
         // Check authentication
-        if (!Auth.isLoggedIn(PortalType.HOSPITAL)) {
+        if (!authService.isSignedIn() || authService.getUserRole() !== 'medical') {
             this.showLoginRequired(container);
             return;
         }
 
-        const session = Auth.getSession(PortalType.HOSPITAL);
+        const user = authService.getCurrentUser();
 
         container.innerHTML = `
       <div class="hospital-dashboard">
         <div class="dashboard-topbar">
           <div class="topbar-info">
             <span class="portal-badge">🏥 Hospital Portal</span>
-            <span class="session-info">Logged in as: ${session.hospitalName}</span>
+            <span class="session-info">Logged in as: ${user.displayName}</span>
           </div>
           <button class="btn btn-logout" id="logout-btn">Logout</button>
         </div>
@@ -135,11 +135,8 @@ export class HospitalDashboardPage {
     `;
 
         container.querySelector('#login-trigger').addEventListener('click', () => {
-            const modal = new LoginModal(PortalType.HOSPITAL, () => {
-                // Re-render after successful login
-                this.render(container);
-            });
-            modal.render();
+            const modal = new LoginModal();
+            modal.show();
         });
     }
 
@@ -148,7 +145,7 @@ export class HospitalDashboardPage {
         const citySelect = container.querySelector('#city-select');
 
         logoutBtn.addEventListener('click', () => {
-            Auth.logout(PortalType.HOSPITAL);
+            authService.signOut();
             window.location.href = '/';
         });
 

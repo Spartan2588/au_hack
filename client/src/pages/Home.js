@@ -1,6 +1,6 @@
 import { ScenarioChat } from '../components/ScenarioChat.js';
 import { LoginModal } from '../components/LoginModal.js';
-import { PortalType } from '../utils/auth.js';
+import { authService } from '../utils/auth.js';
 import gsap from 'gsap';
 import '../styles/pages/home.css';
 
@@ -101,28 +101,22 @@ export class HomePage {
 
     if (hospitalBtn) {
       hospitalBtn.addEventListener('click', () => {
-        const modal = new LoginModal(PortalType.HOSPITAL, () => {
-          window.location.href = '/hospital';
-        });
-        modal.render();
+        const modal = new LoginModal();
+        modal.show();
       });
     }
 
     if (governmentBtn) {
       governmentBtn.addEventListener('click', () => {
-        const modal = new LoginModal(PortalType.GOVERNMENT, () => {
-          window.location.href = '/gov';
-        });
-        modal.render();
+        const modal = new LoginModal();
+        modal.show();
       });
     }
 
     if (userBtn) {
       userBtn.addEventListener('click', () => {
-        const modal = new LoginModal(PortalType.USER, () => {
-          window.location.href = '/user';
-        });
-        modal.render();
+        const modal = new LoginModal();
+        modal.show();
       });
     }
   }

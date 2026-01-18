@@ -1,5 +1,5 @@
 import { ApiClient } from '../utils/api.js';
-import { Auth, PortalType } from '../utils/auth.js';
+import { authService } from '../utils/auth.js';
 import { LoginModal } from '../components/LoginModal.js';
 import gsap from 'gsap';
 import '../styles/pages/gov-dashboard.css';
@@ -15,12 +15,12 @@ export class GovDashboardPage {
 
   async render(container) {
     // Check authentication
-    if (!Auth.isLoggedIn(PortalType.GOVERNMENT)) {
+    if (!authService.isSignedIn() || authService.getUserRole() !== 'government') {
       this.showLoginRequired(container);
       return;
     }
 
-    const session = Auth.getSession(PortalType.GOVERNMENT);
+    const user = authService.getCurrentUser();
 
     container.innerHTML = `
       <div class="gov-dashboard">
@@ -28,7 +28,7 @@ export class GovDashboardPage {
         <div class="dashboard-topbar gov-topbar">
           <div class="topbar-info">
             <span class="portal-badge gov-badge">🏛️ Government Portal</span>
-            <span class="session-info">Department: ${session.department}</span>
+            <span class="session-info">Department: ${user.displayName}</span>
           </div>
           <button class="btn btn-logout gov-logout" id="logout-btn">Logout</button>
         </div>
@@ -121,10 +121,8 @@ export class GovDashboardPage {
     `;
 
     container.querySelector('#login-trigger').addEventListener('click', () => {
-      const modal = new LoginModal(PortalType.GOVERNMENT, () => {
-        this.render(container);
-      });
-      modal.render();
+      const modal = new LoginModal();
+      modal.show();
     });
   }
 
@@ -136,7 +134,7 @@ export class GovDashboardPage {
     // Logout handler
     if (logoutBtn) {
       logoutBtn.addEventListener('click', () => {
-        Auth.logout(PortalType.GOVERNMENT);
+        authService.signOut();
         window.location.href = '/';
       });
     }
