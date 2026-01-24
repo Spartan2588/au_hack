@@ -16,7 +16,7 @@ export class LoginModal {
    */
   show() {
     if (this.isVisible) return;
-    
+
     this.isVisible = true;
     this.render();
   }
@@ -26,7 +26,7 @@ export class LoginModal {
    */
   hide() {
     if (!this.isVisible) return;
-    
+
     this.isVisible = false;
     const modal = document.querySelector('.login-modal-overlay');
     if (modal) {
@@ -134,7 +134,7 @@ export class LoginModal {
 
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     this.setupEventListeners();
-    
+
     // Focus on name input
     setTimeout(() => {
       const nameInput = document.querySelector('#user-name');
@@ -259,7 +259,7 @@ export class LoginModal {
   }
 
   /**
-   * Show success message after sign-in
+   * Show success message after sign-in and redirect to appropriate portal
    * @param {Object} user - User object
    */
   showSuccessMessage(user) {
@@ -267,20 +267,30 @@ export class LoginModal {
       <div class="success-toast" id="signin-success">
         <div class="success-content">
           <span class="success-icon">✅</span>
-          <span class="success-text">Welcome, ${user.displayName}!</span>
+          <span class="success-text">Welcome, ${user.displayName}! Redirecting...</span>
         </div>
       </div>
     `;
 
     document.body.insertAdjacentHTML('beforeend', successHTML);
 
-    // Auto-remove after 3 seconds
+    // Determine redirect path based on role
+    const redirectPaths = {
+      government: '/gov',
+      medical: '/hospital',
+      citizen: '/user'
+    };
+    const redirectPath = redirectPaths[user.role] || '/';
+
+    // Redirect after brief delay to show success message
     setTimeout(() => {
       const toast = document.querySelector('#signin-success');
       if (toast) {
         toast.classList.add('fade-out');
         setTimeout(() => toast.remove(), 300);
       }
-    }, 3000);
+      // Navigate to role-specific portal
+      window.location.href = redirectPath;
+    }, 1000);
   }
 }

@@ -6,13 +6,13 @@ export class Navigation {
   constructor() {
     this.loginModal = new LoginModal();
     this.currentUser = authService.getCurrentUser();
-    
+
     // Listen for auth events
     window.addEventListener('user-signed-in', (e) => {
       this.currentUser = e.detail;
       this.updateUserDisplay();
     });
-    
+
     window.addEventListener('user-signed-out', () => {
       this.currentUser = null;
       this.updateUserDisplay();
@@ -35,7 +35,6 @@ export class Navigation {
 
         <ul class="nav-menu" id="nav-menu">
           <li><a href="/" class="nav-link active" data-link>Home</a></li>
-          <li><a href="/platform" class="nav-link" data-link>Platform</a></li>
           <li><a href="/trends" class="nav-link" data-link>Trends</a></li>
           <li><a href="/map" class="nav-link" data-link>Map</a></li>
           <li><a href="/cascade" class="nav-link" data-link>Cascade</a></li>
@@ -107,7 +106,7 @@ export class Navigation {
     const authSection = document.querySelector('#nav-auth');
     if (authSection) {
       authSection.innerHTML = this.renderAuthSection();
-      
+
       // Re-setup auth event listeners
       const signInBtn = authSection.querySelector('#sign-in-btn');
       const signOutBtn = authSection.querySelector('#sign-out-btn');

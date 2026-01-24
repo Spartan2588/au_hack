@@ -616,29 +616,173 @@ export class CascadingFailureViz {
 
   renderCharts() {
     if (!this.container || !this.cascadeData) return;
-    const impact = this.cascadeData.total_impact || {};
-    const timeSeries = impact.severity_time_series || [];
-    const econSeries = impact.economic_cost_time_series || [];
 
-    const times = timeSeries.map(p => p.time_hours);
-    const severities = timeSeries.map(p => p.severity * 100);
-    const costs = econSeries.map(p => p.cost_usd / 1000000);
+    // Get timeline data from the correct location in API response
+    const timeline = this.cascadeData.timeline || [];
+    const impact = this.cascadeData.total_impact || {};
+    const econTimeline = impact.economic_timeline || [];
+
+    // Map the data to the format Plotly expects
+    const times = timeline.map(p => p.hour);
+    const severities = timeline.map(p => (p.total_severity || 0) * 100);
+    const econTimes = econTimeline.map(p => p.hour);
+    const costs = econTimeline.map(p => (p.cumulative_cost || 0) / 1000000);
+
+    // If no timeline data, generate from cascades
+    if (times.length === 0 && this.cascadeData.cascades) {
+      const cascades = this.cascadeData.cascades || [];
+      cascades.forEach(c => {
+        times.push(c.impact_time_hours);
+        severities.push((c.severity || 0) * 100);
+      });
+      // Sort by time
+      const sorted = times.map((t, i) => ({ time: t, severity: severities[i] }))
+        .sort((a, b) => a.time - b.time);
+      times.length = 0;
+      severities.length = 0;
+      sorted.forEach(p => {
+        times.push(p.time);
+        severities.push(p.severity);
+      });
+    }
 
     const layout = {
-      paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
       font: { color: '#94a3b8', family: 'Inter' },
       margin: { t: 20, r: 20, b: 40, l: 50 },
       xaxis: { title: 'Hours', gridcolor: 'rgba(255,255,255,0.05)' },
-      yaxis: { gridcolor: 'rgba(255,255,255,0.05)' }
+      yaxis: { gridcolor: 'rgba(255,255,255,0.05)', title: 'Severity (%)' }
     };
 
-    Plotly.newPlot('severity-chart', [{ x: times, y: severities, type: 'scatter', mode: 'lines+markers', line: { color: '#ef4444', width: 3 }, marker: { size: 6 } }], layout);
-    Plotly.newPlot('economic-chart', [{ x: times, y: costs, type: 'scatter', mode: 'lines+markers', line: { color: '#a78bfa', width: 3 }, marker: { size: 6 } }], { ...layout, yaxis: { ...layout.yaxis, title: '$ Millions' } });
+    // Render severity chart
+    if (times.length > 0) {
+      Plotly.newPlot('severity-chart', [{
+        x: times,
+        y: severities,
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#ef4444', width: 3 },
+        marker: { size: 6 },
+        name: 'Severity'
+      }], layout);
+    } else {
+      // Show message if no data
+      const severityChart = this.container.querySelector('#severity-chart');
+      if (severityChart) {
+        severityChart.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 2rem;">No severity timeline data available</p>';
+      }
+    }
 
-    if (this.cascadeData.uncertainty_samples) {
-      const data = this.cascadeData.uncertainty_samples.map(s => ({ x: times, y: s.map(v => v * 100), type: 'scatter', mode: 'lines', line: { color: 'rgba(239, 68, 68, 0.1)', width: 1 }, showlegend: false }));
-      data.push({ x: times, y: severities, type: 'scatter', mode: 'lines', line: { color: '#ef4444', width: 3 }, name: 'Expected Path' });
+    // Render economic chart
+    if (econTimes.length > 0) {
+      Plotly.newPlot('economic-chart', [{
+        x: econTimes,
+        y: costs,
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#a78bfa', width: 3 },
+        marker: { size: 6 },
+        name: 'Economic Cost'
+      }], { ...layout, yaxis: { ...layout.yaxis, title: '$ Millions' } });
+    } else if (times.length > 0) {
+      // Fallback: generate estimated economic impact based on severity
+      const estCosts = severities.map((s, i) => (s / 100) * 10 * (i + 1)); // Simple estimate
+      Plotly.newPlot('economic-chart', [{
+        x: times,
+        y: estCosts,
+        type: 'scatter',
+        mode: 'lines+markers',
+        line: { color: '#a78bfa', width: 3 },
+        marker: { size: 6 },
+        name: 'Est. Economic Cost'
+      }], { ...layout, yaxis: { ...layout.yaxis, title: '$ Millions (Est.)' } });
+    }
+
+    // Monte Carlo uncertainty chart
+    const monteCarloData = this.cascadeData.monte_carlo;
+    if (monteCarloData && monteCarloData.sample_results && monteCarloData.sample_results.length > 0) {
+      const samples = monteCarloData.sample_results;
+
+      // Get time points from the first sample's timeline
+      const firstSample = samples[0];
+      const sampleTimeline = firstSample.timeline || [];
+      const mcTimes = sampleTimeline.map(p => p.hour);
+
+      // Create traces for each sample (semi-transparent lines)
+      const traces = samples.slice(0, 50).map(sample => {  // Limit to 50 samples for performance
+        const timeline = sample.timeline || [];
+        return {
+          x: timeline.map(p => p.hour),
+          y: timeline.map(p => (p.total_severity || 0) * 100),
+          type: 'scatter',
+          mode: 'lines',
+          line: { color: 'rgba(239, 68, 68, 0.15)', width: 1 },
+          showlegend: false,
+          hoverinfo: 'skip'
+        };
+      });
+
+      // Add the mean/expected path if available from statistics
+      const stats = monteCarloData.statistics;
+      if (stats && stats.mean_severity_by_hour) {
+        const meanHours = Object.keys(stats.mean_severity_by_hour).map(Number).sort((a, b) => a - b);
+        const meanValues = meanHours.map(h => (stats.mean_severity_by_hour[h] || 0) * 100);
+
+        traces.push({
+          x: meanHours,
+          y: meanValues,
+          type: 'scatter',
+          mode: 'lines',
+          line: { color: '#ef4444', width: 3 },
+          name: 'Mean Path'
+        });
+      } else {
+        // Use the main timeline as expected path
+        traces.push({
+          x: times,
+          y: severities,
+          type: 'scatter',
+          mode: 'lines',
+          line: { color: '#ef4444', width: 3 },
+          name: 'Expected Path'
+        });
+      }
+
+      const mcLayout = {
+        ...layout,
+        title: { text: 'Monte Carlo Uncertainty Range', font: { color: '#e2e8f0', size: 14 } },
+        yaxis: { ...layout.yaxis, title: 'Severity (%)' },
+        showlegend: true,
+        legend: { x: 0, y: 1, bgcolor: 'rgba(0,0,0,0)', font: { color: '#94a3b8' } }
+      };
+
+      Plotly.newPlot('uncertainty-chart', traces, mcLayout);
+    } else if (this.cascadeData.uncertainty_samples) {
+      // Fallback for old format
+      const data = this.cascadeData.uncertainty_samples.map(s => ({
+        x: times,
+        y: Array.isArray(s) ? s.map(v => v * 100) : [],
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: 'rgba(239, 68, 68, 0.1)', width: 1 },
+        showlegend: false
+      }));
+      data.push({
+        x: times,
+        y: severities,
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: '#ef4444', width: 3 },
+        name: 'Expected Path'
+      });
       Plotly.newPlot('uncertainty-chart', data, { ...layout, title: 'Monte Carlo Uncertainty Range' });
+    } else {
+      // No Monte Carlo data available
+      const uncertaintyChart = this.container.querySelector('#uncertainty-chart');
+      if (uncertaintyChart) {
+        uncertaintyChart.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 2rem;">No Monte Carlo data available. Enable Monte Carlo and run simulation.</p>';
+      }
     }
   }
 

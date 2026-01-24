@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urban Risk Intelligence Platform - System Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        .chart-container {
+            padding: 40px;
+            background: white;
+        }
+        .chart-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .legend {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        .legend h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .legend-item {
+            display: inline-block;
+            margin: 5px 15px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .legend-presentation { background: #e1f5fe; color: #01579b; }
+        .legend-gateway { background: #f3e5f5; color: #4a148c; }
+        .legend-application { background: #e8f5e8; color: #1b5e20; }
+        .legend-domain { background: #fff3e0; color: #e65100; }
+        .legend-infrastructure { background: #fce4ec; color: #880e4f; }
+        .legend-external { background: #ffebee; color: #b71c1c; }
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ Urban Risk Intelligence Platform</h1>
+            <p>System Architecture Overview</p>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">🎯 High-Level System Architecture</div>
+            
+            <div class="mermaid">
+                graph TB
+                    subgraph "🖥️ Presentation Layer"
+                        WEB[🌐 Web Client<br/>React/Vite<br/>Role-based UI]
+                        MOBILE[📱 Mobile App<br/>PWA/Native<br/>Real-time alerts]
+                        DASH[📊 Admin Dashboard<br/>Management UI<br/>Analytics]
+                    end
+                    
+                    subgraph "🚪 API Gateway Layer"
+                        GATEWAY[🔌 API Gateway<br/>Kong/Nginx<br/>Load Balancing]
+                        AUTH[🔐 Authentication<br/>OAuth 2.0/JWT<br/>Multi-factor Auth]
+                        RATE[⚡ Rate Limiting<br/>& Throttling<br/>DDoS Protection]
+                    end
+                    
+                    subgraph "⚙️ Application Services"
+                        RISK[🎯 Risk Assessment<br/>Service<br/>Multi-domain Analysis]
+                        PRED[🧠 Prediction Engine<br/>ML/AI Models<br/>Monte Carlo Simulation]
+                        NOTIF[📢 Notification<br/>Service<br/>Multi-channel Alerts]
+                        DATA[📥 Data Integration<br/>Service<br/>ETL Pipelines]
+                        SCENARIO[🎭 Scenario<br/>Service<br/>What-if Analysis]
+                        USER[👤 User Management<br/>Service<br/>RBAC System]
+                    end
+                    
+                    subgraph "🏢 Domain Services"
+                        ENV[🌍 Environmental<br/>Domain<br/>AQI & Climate]
+                        HEALTH[🏥 Health<br/>Domain<br/>Hospital Capacity]
+                        INFRA[🏗️ Infrastructure<br/>Domain<br/>Power & Transport]
+                        ECON[💰 Economic<br/>Domain<br/>Market Indicators]
+                        SOCIAL[👥 Social<br/>Domain<br/>Population Data]
+                        EMERG[🚨 Emergency<br/>Domain<br/>Response Systems]
+                    end
+                    
+                    subgraph "🔧 Infrastructure Layer"
+                        KAFKA[📨 Message Broker<br/>Apache Kafka<br/>Event Streaming]
+                        REDIS[⚡ Cache Layer<br/>Redis Cluster<br/>Session Storage]
+                        ELASTIC[🔍 Search Engine<br/>Elasticsearch<br/>Full-text Search]
+                    end
+                    
+                    subgraph "💾 Data Layer"
+                        POSTGRES[(🐘 PostgreSQL<br/>OLTP<br/>Transactional Data)]
+                        CLICKHOUSE[(📊 ClickHouse<br/>OLAP<br/>Time Series Analytics)]
+                        NEO4J[(🕸️ Neo4j<br/>Graph DB<br/>Relationship Analysis)]
+                        MONGO[(🍃 MongoDB<br/>Document Store<br/>Flexible Schemas)]
+                    end
+                    
+                    subgraph "🌐 External Systems"
+                        GOV[🏛️ Government APIs<br/>Census & Policy Data]
+                        WEATHER[🌤️ Weather Services<br/>OpenWeatherMap & NOAA]
+                        IOT[📡 IoT Sensors<br/>Real-time Monitoring]
+                        SOCIAL_API[📱 Social Media APIs<br/>Twitter & News Feeds]
+                        HOSPITAL[🏥 Hospital Systems<br/>Capacity & Health Data]
+                    end
+                    
+                    %% Connections
+                    WEB --> GATEWAY
+                    MOBILE --> GATEWAY
+                    DASH --> GATEWAY
+                    
+                    GATEWAY --> AUTH
+                    GATEWAY --> RATE
+                    GATEWAY --> RISK
+                    GATEWAY --> PRED
+                    GATEWAY --> NOTIF
+                    
+                    RISK --> ENV
+                    RISK --> HEALTH
+                    RISK --> INFRA
+                    
+                    PRED --> ECON
+                    PRED --> SOCIAL
+                    PRED --> EMERG
+                    
+                    DATA --> KAFKA
+                    SCENARIO --> REDIS
+                    USER --> ELASTIC
+                    
+                    ENV --> POSTGRES
+                    HEALTH --> CLICKHOUSE
+                    INFRA --> NEO4J
+                    ECON --> MONGO
+                    
+                    GOV --> DATA
+                    WEATHER --> DATA
+                    IOT --> KAFKA
+                    SOCIAL_API --> DATA
+                    HOSPITAL --> DATA
+                    
+                    %% Styling
+                    classDef presentationStyle fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#01579b
+                    classDef gatewayStyle fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#4a148c
+                    classDef applicationStyle fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px,color:#1b5e20
+                    classDef domainStyle fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#e65100
+                    classDef infrastructureStyle fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#880e4f
+                    classDef dataStyle fill:#fff3e0,stroke:#bf360c,stroke-width:2px,color:#bf360c
+                    classDef externalStyle fill:#ffebee,stroke:#b71c1c,stroke-width:2px,color:#b71c1c
+                    
+                    class WEB,MOBILE,DASH presentationStyle
+                    class GATEWAY,AUTH,RATE gatewayStyle
+                    class RISK,PRED,NOTIF,DATA,SCENARIO,USER applicationStyle
+                    class ENV,HEALTH,INFRA,ECON,SOCIAL,EMERG domainStyle
+                    class KAFKA,REDIS,ELASTIC infrastructureStyle
+                    class POSTGRES,CLICKHOUSE,NEO4J,MONGO dataStyle
+                    class GOV,WEATHER,IOT,SOCIAL_API,HOSPITAL externalStyle
+            </div>
+            
+            <div class="legend">
+                <h3>🎨 Architecture Legend</h3>
+                <span class="legend-item legend-presentation">🖥️ Presentation Layer</span>
+                <span class="legend-item legend-gateway">🚪 API Gateway Layer</span>
+                <span class="legend-item legend-application">⚙️ Application Services</span>
+                <span class="legend-item legend-domain">🏢 Domain Services</span>
+                <span class="legend-item legend-infrastructure">🔧 Infrastructure Layer</span>
+                <span class="legend-item legend-external">🌐 External Systems</span>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">🔄 Data Flow Architecture</div>
+            
+            <div class="mermaid">
+                flowchart LR
+                    subgraph "📡 Data Sources"
+                        A[🌡️ IoT Sensors<br/>Real-time Monitoring]
+                        B[🏛️ Government APIs<br/>Policy & Census Data]
+                        C[🌤️ Weather APIs<br/>Climate Information]
+                        D[📱 Social Media<br/>Public Sentiment]
+                        E[🏥 Hospital Systems<br/>Health Metrics]
+                    end
+                    
+                    subgraph "📥 Ingestion Layer"
+                        F[🚪 API Gateway<br/>Unified Entry Point]
+                        G[📨 Kafka Streams<br/>Event Processing]
+                        H[✅ Data Validators<br/>Quality Assurance]
+                    end
+                    
+                    subgraph "⚙️ Processing Layer"
+                        I[🌊 Stream Processor<br/>Apache Flink<br/>Real-time Analytics]
+                        J[🔄 ETL Pipeline<br/>Extract Transform Load]
+                        K[🛠️ Feature Engineering<br/>ML Preparation]
+                    end
+                    
+                    subgraph "🧠 ML Pipeline"
+                        L[🎓 Model Training<br/>Continuous Learning]
+                        M[🚀 Model Serving<br/>Real-time Inference]
+                        N[🧪 A/B Testing<br/>Model Validation]
+                    end
+                    
+                    subgraph "💾 Storage Layer"
+                        O[(🗄️ Raw Data Lake<br/>Bronze Layer)]
+                        P[(📊 Processed Data<br/>Silver & Gold Layers)]
+                        Q[(🎯 Model Store<br/>MLflow Registry)]
+                    end
+                    
+                    subgraph "🎯 Application Layer"
+                        R[📊 Risk Calculator<br/>Multi-domain Analysis]
+                        S[🌊 Cascade Simulator<br/>Failure Propagation]
+                        T[🚨 Alert Generator<br/>Smart Notifications]
+                    end
+                    
+                    subgraph "📤 Output Layer"
+                        U[📱 Real-time Dashboard<br/>Live Monitoring]
+                        V[📲 Mobile Notifications<br/>Push Alerts]
+                        W[🔌 API Responses<br/>External Integration]
+                    end
+                    
+                    %% Flow connections
+                    A --> F
+                    B --> F
+                    C --> F
+                    D --> F
+                    E --> F
+                    
+                    F --> G
+                    G --> H
+                    H --> I
+                    
+                    I --> J
+                    J --> K
+                    K --> L
+                    
+                    L --> M
+                    M --> N
+                    N --> Q
+                    
+                    I --> O
+                    J --> P
+                    K --> P
+                    
+                    P --> R
+                    Q --> R
+                    R --> S
+                    S --> T
+                    
+                    T --> U
+                    T --> V
+                    T --> W
+                    
+                    %% Styling for data flow
+                    classDef sourceStyle fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#c62828
+                    classDef ingestionStyle fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px,color:#2e7d32
+                    classDef processingStyle fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#1565c0
+                    classDef mlStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#7b1fa2
+                    classDef storageStyle fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#ef6c00
+                    classDef appStyle fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#00695c
+                    classDef outputStyle fill:#f1f8e9,stroke:#558b2f,stroke-width:2px,color:#558b2f
+                    
+                    class A,B,C,D,E sourceStyle
+                    class F,G,H ingestionStyle
+                    class I,J,K processingStyle
+                    class L,M,N mlStyle
+                    class O,P,Q storageStyle
+                    class R,S,T appStyle
+                    class U,V,W outputStyle
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>🏗️ Urban Risk Intelligence Platform - Advanced System Architecture</p>
+            <p>Designed for scalability, resilience, and real-time urban risk management</p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            themeVariables: {
+                primaryColor: '#e1f5fe',
+                primaryTextColor: '#01579b',
+                primaryBorderColor: '#0277bd',
+                lineColor: '#0288d1',
+                secondaryColor: '#f3e5f5',
+                tertiaryColor: '#e8f5e8'
+            }
+        });
+    </script>
+</body>
+</html>
